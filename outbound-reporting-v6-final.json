@@ -1,0 +1,1759 @@
+{
+  "name": "FullFunnel // Outbound Reporting - Multi-Campaign Dynamic v2",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Outbound Campaign Report Request",
+        "formDescription": "Generate a combined outbound report for Instantly and HeyReach campaigns.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Client Name",
+              "placeholder": "e.g. Constellation",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Instantly Campaigns",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Dor // Screenshot + Link Included"
+                  },
+                  {
+                    "option": "Dor // Gated CTA"
+                  },
+                  {
+                    "option": "Dor (V5)"
+                  },
+                  {
+                    "option": "Dor (V4)"
+                  },
+                  {
+                    "option": "Stalled"
+                  },
+                  {
+                    "option": "Dor (V3)"
+                  },
+                  {
+                    "option": "Digital Evidence"
+                  },
+                  {
+                    "option": "Dor (V2)"
+                  },
+                  {
+                    "option": "Dor"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Instantly Campaigns (Other / Custom)",
+              "placeholder": "Add any campaign names not listed above, comma-separated"
+            },
+            {
+              "fieldLabel": "HeyReach Campaigns",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Dor (V5)"
+                  },
+                  {
+                    "option": "Dor (v4)-2/3"
+                  },
+                  {
+                    "option": "Stalled"
+                  },
+                  {
+                    "option": "Digital Evidence"
+                  },
+                  {
+                    "option": "Dor (V3)"
+                  },
+                  {
+                    "option": "Dor"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "HeyReach Campaigns (Other / Custom)",
+              "placeholder": "Add any campaign names not listed above, comma-separated"
+            },
+            {
+              "fieldLabel": "Start Date",
+              "fieldType": "date",
+              "defaultValue": "={{ $now.format('yyyy-MM-dd') }}",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "End Date",
+              "fieldType": "date",
+              "defaultValue": "={{ $now.format('yyyy-MM-dd') }}",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Campaign Context",
+              "placeholder": "Add any context to help the AI generate a more accurate Combined Readout (e.g. key client meetings, known objections, strategic focus)."
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Thank you! Your report is being generated and will be sent to Slack channel named \"#outbound-reporting-trial\" shortly."
+            }
+          },
+          "customCss": ":root {\n  --font-family: 'Open Sans', sans-serif;\n  --font-weight-normal: 400;\n  --font-weight-bold: 600;\n  --font-size-body: 13px;\n  --font-size-label: 13px;\n  --font-size-input: 14px;\n  --font-size-header: 22px;\n  --color-background: #f4f7ff;\n  --color-card-bg: #ffffff;\n  --color-card-border: #dde6fb;\n  --color-link: #1463ff;\n  --color-header: #0b1220;\n  --color-label: #111827;\n  --color-input-border: #d7def2;\n  --color-input-text: #0f172a;\n  --color-focus-border: #1463ff;\n  --color-submit-btn-bg: #146dfa;\n  --color-submit-btn-text: #ffffff;\n  --color-error: #dc2626;\n  --color-required: #1463ff;\n  --border-radius-card: 14px;\n  --border-radius-input: 10px;\n  --container-width: 480px;\n  --submit-btn-height: 52px;\n  --ff-logo: url(\"https://www.fullfunnel.co/hubfs/image-logo.svg\");\n  --ff-logo-width: 190px;\n  --ff-logo-height: 40px;\n}\nbody {\n  background: radial-gradient(900px 500px at 50% 20%, rgba(20, 99, 255, 0.10), rgba(255, 255, 255, 0) 60%),\n              radial-gradient(900px 500px at 50% 100%, rgba(20, 99, 255, 0.08), rgba(255, 255, 255, 0) 60%),\n              var(--color-background);\n}\nbody::before {\n  content: \"\";\n  display: block;\n  width: var(--ff-logo-width);\n  height: var(--ff-logo-height);\n  margin: 18px auto 14px;\n  background-image: var(--ff-logo);\n  background-repeat: no-repeat;\n  background-position: center;\n  background-size: contain;\n}\n* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }"
+        }
+      },
+      "id": "5bae5084-da9d-4ac5-a8c5-531d9819077b",
+      "name": "Report Request Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1584,
+        944
+      ],
+      "webhookId": "03644d00-1ce7-4984-9d73-8a8eb338b582",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "clientName",
+              "value": "={{ $json['Client Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "instantlyCampaignNames",
+              "value": "={{ [...(Array.isArray($json['Instantly Campaigns']) ? $json['Instantly Campaigns'] : ($json['Instantly Campaigns'] ? [$json['Instantly Campaigns']] : [])), ...(($json['Instantly Campaigns (Other / Custom)'] || '').split(',').map(s => s.trim()).filter(Boolean))] }}",
+              "type": "array"
+            },
+            {
+              "id": "2eaba6be-e98e-4e53-80fe-86d6fbfe2988",
+              "name": "heyReachCampaignNames",
+              "value": "={{ [...(Array.isArray($json['HeyReach Campaigns']) ? $json['HeyReach Campaigns'] : ($json['HeyReach Campaigns'] ? [$json['HeyReach Campaigns']] : [])), ...(($json['HeyReach Campaigns (Other / Custom)'] || '').split(',').map(s => s.trim()).filter(Boolean))] }}",
+              "type": "array"
+            },
+            {
+              "id": "id-4",
+              "name": "startDate",
+              "value": "={{ $json['Start Date'] }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "endDate",
+              "value": "={{ $json['End Date'] }}",
+              "type": "string"
+            },
+            {
+              "id": "campaign-context-id",
+              "name": "campaignContext",
+              "value": "={{ $json['Campaign Context'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b922b5db-b77c-4e2a-81c7-4e697bb827c5",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getMany",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-instantly.instantly",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        464
+      ],
+      "id": "8b619028-ba8f-4789-ae1e-86fa6a4c5e5b",
+      "name": "Get many campaigns",
+      "retryOnFail": true,
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "analytics",
+        "campaignId": {
+          "__rl": true,
+          "value": "={{ $json.matchedCampaign.id }}",
+          "mode": "id"
+        },
+        "startDate": "={{ $('Workflow Configuration').first().json.startDate }}",
+        "endDate": "={{ $('Workflow Configuration').first().json.endDate }}"
+      },
+      "type": "n8n-nodes-instantly.instantly",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        336
+      ],
+      "id": "99b6964f-b5e2-4d51-9fd5-3836f8799fad",
+      "name": "Get Campaign Analytics",
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "account",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-instantly.instantly",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        704
+      ],
+      "id": "3f4497b8-643a-48e0-96d8-19782a710fc1",
+      "name": "Get all accounts",
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "lead",
+        "operation": "getMany",
+        "limit": 100,
+        "filters": {
+          "campaign": {
+            "__rl": true,
+            "value": "={{ $json.matchedCampaign.id }}",
+            "mode": "id"
+          }
+        }
+      },
+      "type": "n8n-nodes-instantly.instantly",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        528
+      ],
+      "id": "2037a44d-8fe4-4a83-b750-bec93901a2e6",
+      "name": "Get all leads",
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "campaignId": {
+          "__rl": true,
+          "value": "={{ $json.matchedCampaign.id }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-instantly.instantly",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        144
+      ],
+      "id": "8e13c487-8833-46bf-bc51-0b26567118d3",
+      "name": "Get matched campaign data",
+      "retryOnFail": false,
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        48,
+        336
+      ],
+      "id": "2d1f9b20-097f-4f43-92cc-921abc3368ac",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        592
+      ],
+      "id": "e764248a-521f-47d1-a909-b778a3ab85cf",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "N5UZsFvSrjm5UYEh",
+          "name": "FF Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 100,
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-heyreach.heyReach",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        1424
+      ],
+      "id": "9d327e66-2445-4cd2-b0b2-559adb098156",
+      "name": "Retrieve all campaigns",
+      "retryOnFail": true,
+      "credentials": {
+        "heyReachApi": {
+          "id": "94bOp6uYmTijNIjD",
+          "name": "Constellation Heyreach Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.matched }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dd9fb7b4-35ed-4d43-9474-894562df61e4",
+      "name": "Instantly Campaign Existence Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -416,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "campaignId": "={{ $json.matchedCampaignId }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-heyreach.heyReach",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1440
+      ],
+      "id": "daf4894b-104a-4852-a599-c5a5c45a79d4",
+      "name": "Retrieve found campaign data",
+      "credentials": {
+        "heyReachApi": {
+          "id": "94bOp6uYmTijNIjD",
+          "name": "Constellation Heyreach Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "stats",
+        "campaignIds": [
+          "={{ $json.matchedCampaignId }}"
+        ],
+        "additionalFields": {
+          "startDate": "={{ $('Workflow Configuration').first().json.startDate }}",
+          "endDate": "={{ $('Workflow Configuration').first().json.endDate }}"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-heyreach.heyReach",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1632
+      ],
+      "id": "8dd638c3-5422-4f4d-b5d4-cb029a4cf2dd",
+      "name": "Retrieve overall statistics for found campaign",
+      "retryOnFail": true,
+      "credentials": {
+        "heyReachApi": {
+          "id": "94bOp6uYmTijNIjD",
+          "name": "Constellation Heyreach Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "linkedInAccount",
+        "limit": 100,
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-heyreach.heyReach",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1824
+      ],
+      "id": "9cf0794b-ed42-4488-ad9b-b47f18da4547",
+      "name": "Retrieve all LinkedIn accounts",
+      "retryOnFail": true,
+      "credentials": {
+        "heyReachApi": {
+          "id": "94bOp6uYmTijNIjD",
+          "name": "Constellation Heyreach Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "inbox",
+        "limit": 100,
+        "additionalFields": {
+          "campaignIds": [
+            "={{ $json.matchedCampaignId }}"
+          ]
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-heyreach.heyReach",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        2016
+      ],
+      "id": "9f54f7b6-def7-470d-9a44-ac686750ba1b",
+      "name": "Retrieve inbox messages for found campaign",
+      "retryOnFail": true,
+      "credentials": {
+        "heyReachApi": {
+          "id": "94bOp6uYmTijNIjD",
+          "name": "Constellation Heyreach Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// MERGE REPORT DATA - n8n Code Node (Multi-Campaign)\n// Runs once for all items, outputs one item per matched campaign\n// ============================================================\nconst config = $('Workflow Configuration').first().json;\nconst clientName = config.clientName || 'Unknown Client';\nconst startDate = config.startDate || '';\nconst endDate = config.endDate || '';\nconst campaignContext = config.campaignContext || '';\n\n// Index analytics by campaign_id\nconst analyticsMap = {};\ntry {\n  $('Get Campaign Analytics').all().forEach(item => {\n    const id = item.json.campaign_id;\n    if (id) analyticsMap[id] = item.json;\n  });\n} catch(e) {}\n\n// Index matched campaign data by id\nconst campaignDataMap = {};\ntry {\n  $('Get matched campaign data').all().forEach(item => {\n    const id = item.json.id;\n    if (id) campaignDataMap[id] = item.json;\n  });\n} catch(e) {}\n\n// Index leads by campaign_id\nconst leadsMap = {};\ntry {\n  $('Get all leads').all().forEach(item => {\n    const leads = item.json.items || [];\n    leads.forEach(lead => {\n      const cid = lead.campaign;\n      if (!cid) return;\n      if (!leadsMap[cid]) leadsMap[cid] = [];\n      leadsMap[cid].push(lead);\n    });\n  });\n} catch(e) {}\n\n// Accounts are shared - get all once\nlet allAccounts = [];\ntry {\n  const rawAccounts = $('Get all accounts').first().json;\n  allAccounts = rawAccounts.items || [];\n} catch(e) {}\n\n// Index replies by campaign_id\nconst repliesMap = {};\ntry {\n  $('Get Campaign Replies').all().forEach(item => {\n    const emails = item.json.emails || item.json.items || item.json.data || [];\n    emails.forEach(e => {\n      const cid = e.campaign_id || e.campaign;\n      if (!cid) return;\n      if (!repliesMap[cid]) repliesMap[cid] = [];\n      repliesMap[cid].push(e);\n    });\n  });\n} catch(e) {}\n\n// Index lifetime analytics by campaign_id\nconst lifetimeMap = {};\ntry {\n  $('Get Lifetime Campaign Analytics').all().forEach(item => {\n    const id = item.json.campaign_id;\n    if (id) lifetimeMap[id] = item.json;\n  });\n} catch(e) {}\n\n// Get all matched campaigns\nconst matchedCampaigns = $('Match Instantly Campaign Name - Exist or not').all()\n  .filter(item => item.json.matched === true);\n\nconst results = [];\n\nfor (const matchItem of matchedCampaigns) {\n  const matchData = matchItem.json;\n  const campaignId = matchData.matchedCampaignId;\n  const targetCampaignName = matchData.targetCampaignName;\n\n  const campaignData = campaignDataMap[campaignId] || matchData.matchedCampaign || {};\n  const analyticsData = analyticsMap[campaignId] || {};\n  const leads = leadsMap[campaignId] || [];\n  const replies = repliesMap[campaignId] || [];\n\n  const requestContext = { clientName, startDate, endDate, campaignContext, targetCampaignName };\n\nconst leadsAnalysis = { totalLeads: leads.length, byStatus: {}, byJobTitle: {}, byLocation: {}, byCompany: {}, withReplies: [] };\nleads.forEach(lead => {\n  const status = lead.status;\n  leadsAnalysis.byStatus[status] = (leadsAnalysis.byStatus[status] || 0) + 1;\n  const jobTitle = lead.payload?.jobTitle || 'Unknown';\n  leadsAnalysis.byJobTitle[jobTitle] = (leadsAnalysis.byJobTitle[jobTitle] || 0) + 1;\n  const location = lead.payload?.location || 'Unknown';\n  const locationParts = location.split(',');\n  const region = locationParts[locationParts.length - 1]?.trim() || 'Unknown';\n  leadsAnalysis.byLocation[region] = (leadsAnalysis.byLocation[region] || 0) + 1;\n  const company = lead.company_name || 'Unknown';\n  leadsAnalysis.byCompany[company] = (leadsAnalysis.byCompany[company] || 0) + 1;\n  if (lead.email_reply_count > 0) {\n    leadsAnalysis.withReplies.push({ email: lead.email, name: `${lead.first_name} ${lead.last_name}`, company: lead.company_name, jobTitle: lead.payload?.jobTitle, replyCount: lead.email_reply_count });\n  }\n});\n\nconst accounts = allAccounts;\nconst campaignEmailList = campaignData.email_list || [];\nconst campaignAccounts = accounts.filter(acc => campaignEmailList.includes(acc.email));\nconst accountsAnalysis = { totalInCampaign: campaignAccounts.length, totalAvailable: accounts.length, averageWarmupScore: 0, byStatus: {}, healthySenders: [], problemSenders: [] };\nlet warmupScoreSum = 0, warmupScoreCount = 0;\ncampaignAccounts.forEach(account => {\n  if (account.stat_warmup_score !== undefined) { warmupScoreSum += account.stat_warmup_score; warmupScoreCount++; }\n  const status = account.status === 1 ? 'Active' : 'Inactive';\n  accountsAnalysis.byStatus[status] = (accountsAnalysis.byStatus[status] || 0) + 1;\n  const senderInfo = { email: account.email, name: `${account.first_name} ${account.last_name}`, warmupScore: account.stat_warmup_score || 0, status: account.status, dailyLimit: account.daily_limit };\n  if (account.stat_warmup_score >= 80 && account.status === 1) { accountsAnalysis.healthySenders.push(senderInfo); } else { accountsAnalysis.problemSenders.push(senderInfo); }\n});\naccountsAnalysis.averageWarmupScore = warmupScoreCount > 0 ? Math.round(warmupScoreSum / warmupScoreCount) : 0;\n\nconst campaignConfig = { name: campaignData.name, id: campaignData.id, status: campaignData.status, statusText: ['Draft','Active','Paused','Completed'][campaignData.status] || 'Unknown', createdAt: campaignData.timestamp_created, sequences: campaignData.sequences, senderCount: campaignData.email_list?.length || 0, openTracking: campaignData.open_tracking, linkTracking: campaignData.link_tracking };\n\nconst analytics = analyticsData;\nconst calculatedMetrics = {\n  replyRate: analytics.emails_sent_count > 0 ? ((analytics.reply_count_unique / analytics.emails_sent_count) * 100).toFixed(2) : 0,\n  bounceRate: analytics.emails_sent_count > 0 ? ((analytics.bounced_count / analytics.emails_sent_count) * 100).toFixed(2) : 0,\n  autoReplyRate: analytics.emails_sent_count > 0 ? ((analytics.reply_count_automatic / analytics.emails_sent_count) * 100).toFixed(2) : 0,\n  emailsPerLead: analytics.leads_count > 0 ? (analytics.emails_sent_count / analytics.leads_count).toFixed(2) : 0\n};\n\nconst reportData = { requestContext, campaignConfig, analytics: { ...analytics, calculated: calculatedMetrics }, leadsAnalysis: { totalLeads: leadsAnalysis.totalLeads, leadsWithReplies: leadsAnalysis.withReplies }, accountsAnalysis, generatedAt: new Date().toISOString() };\n\nlet replyHighlights = [];\ntry {\n  const emails = replies;\n  const startTs = requestContext.startDate ? new Date(requestContext.startDate).getTime() : 0;\n  const endTs = requestContext.endDate ? new Date(requestContext.endDate).getTime() + 86400000 : Infinity;\n  const filtered = emails.filter(e => { const ts = new Date(e.timestamp_email || e.timestamp_created || e.created_at || 0).getTime(); return ts >= startTs && ts <= endTs; });\n  replyHighlights = filtered.map(e => ({ from: e.from_address_email || e.from_address || e.from || '', subject: e.subject || '', body: (e.body?.text || e.body_text || e.text_body || e.snippet || '').slice(0, 1500), timestamp: e.timestamp || e.timestamp_created || e.created_at || '' }));\n} catch(err) { replyHighlights = []; }\nreportData.replyHighlights = replyHighlights;\n\n  results.push({ json: { reportData, reportDataString: JSON.stringify(reportData, null, 2) } });\n}\n\nreturn results;"
+      },
+      "id": "0b9dead8-a0f5-4fb2-95f4-993221124007",
+      "name": "Merge Report Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $items('Workflow Configuration')?.[0]?.json ?? {};\nconst targetsRaw = form.instantlyCampaignNames ?? [];\nconst targets = (Array.isArray(targetsRaw) ? targetsRaw : [targetsRaw]).map(t => (t == null ? '' : String(t)).trim()).filter(Boolean);\nconst campaigns = $json.items ?? $json.data ?? (Array.isArray($json) ? $json : []);\nconst norm = (s) => (s == null ? '' : String(s)).toLowerCase().replace(/[^a-z0-9]+/g, '').trim();\nconst byNorm = new Map();\nfor (const c of campaigns) { const n = c?.name ?? c?.campaign_name ?? ''; if (n) byNorm.set(norm(n), c); }\nconst results = [];\nfor (const target of targets) {\n  const targetNorm = norm(target);\n  let matched = byNorm.get(targetNorm) ?? null;\n  if (!matched) { for (const [n, c] of byNorm.entries()) { if (n.includes(targetNorm) || targetNorm.includes(n)) { matched = c; break; } } }\n  results.push({ json: { targetCampaignName: target, matched: !!matched, matchedCampaignName: matched?.name ?? matched?.campaign_name ?? null, matchedCampaignId: matched?.id ?? null, matchedCampaign: matched ?? null } });\n}\nif (results.length === 0) { results.push({ json: { targetCampaignName: null, matched: false, matchedCampaignName: null, matchedCampaignId: null, matchedCampaign: null, note: 'No Instantly campaigns were selected in the form.' } }); }\nreturn results;"
+      },
+      "id": "921a0a03-7963-4069-983b-999657cd65dd",
+      "name": "Match Instantly Campaign Name - Exist or not",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Workflow Configuration').first().json;\nconst targetsRaw = config.heyReachCampaignNames ?? [];\nconst targets = (Array.isArray(targetsRaw) ? targetsRaw : [targetsRaw]).map(t => (t == null ? '' : String(t)).trim()).filter(Boolean);\nconst campaigns = $json.items ?? $json.data ?? (Array.isArray($json) ? $json : []);\nconst norm = (s) => (s == null ? '' : String(s)).toLowerCase().replace(/[^a-z0-9]+/g, '').trim();\nconst byNorm = new Map();\nfor (const c of campaigns) { const n = c?.name ?? c?.campaign_name ?? c?.title ?? ''; if (n) byNorm.set(norm(n), c); }\nconst results = [];\nfor (const target of targets) {\n  const targetNorm = norm(target);\n  let matched = byNorm.get(targetNorm) ?? null;\n  if (!matched) { for (const [n, c] of byNorm.entries()) { if (n.includes(targetNorm) || targetNorm.includes(n)) { matched = c; break; } } }\n  results.push({ json: { targetCampaignName: target, matched: !!matched, matchedCampaignName: matched?.name ?? matched?.campaign_name ?? matched?.title ?? null, matchedCampaignId: matched?.id ?? null, matchedCampaign: matched ?? null } });\n}\nif (results.length === 0) { results.push({ json: { targetCampaignName: null, matched: false, matchedCampaignName: null, matchedCampaignId: null, matchedCampaign: null, note: 'No HeyReach campaigns were selected in the form.' } }); }\nreturn results;"
+      },
+      "id": "4f9cdacc-536d-4ff5-ad18-71d3b6ccf9e0",
+      "name": "Match Heyreach Campaign Name - Exist or not",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// HEYREACH MERGE REPORT DATA (Multi-Campaign)\n// Runs once for all items, outputs one item per matched campaign\n// ============================================================\nconst config = $('Workflow Configuration').first().json;\n\n// Index campaign data by campaign id\nconst campaignDataMap = {};\ntry {\n  $('Retrieve found campaign data').all().forEach(item => {\n    const id = item.json.id;\n    if (id) campaignDataMap[id] = item.json;\n  });\n} catch(e) {}\n\n// Index stats by campaign id\nconst statsMap = {};\ntry {\n  $('Retrieve overall statistics for found campaign').all().forEach(item => {\n    // stats node returns overallStats — find which campaign this belongs to via item context\n    // Store by index since stats don't have campaign_id directly\n    statsMap[item.json._campaignId || Object.keys(statsMap).length] = item.json;\n  });\n} catch(e) {}\n\n// Get LinkedIn accounts (shared)\nlet accountsData = [];\ntry {\n  const rawAccounts = $('Retrieve all LinkedIn accounts').first().json;\n  accountsData = rawAccounts.items || (Array.isArray(rawAccounts) ? rawAccounts : []);\n} catch(e) {}\n\n// Index inbox messages by campaign id\nconst inboxMap = {};\ntry {\n  $('Retrieve inbox messages for found campaign').all().forEach(item => {\n    const msgs = item.json.items || [];\n    msgs.forEach(msg => {\n      const cid = msg.campaignId || msg.campaign_id;\n      if (!cid) return;\n      if (!inboxMap[cid]) inboxMap[cid] = [];\n      inboxMap[cid].push(msg);\n    });\n  });\n} catch(e) {}\n\n// Get all matched HeyReach campaigns\nconst matchedCampaigns = $('Match Heyreach Campaign Name - Exist or not').all()\n  .filter(item => item.json.matched === true);\n\nconst results = [];\n\nfor (let idx = 0; idx < matchedCampaigns.length; idx++) {\n  const matchData = matchedCampaigns[idx].json;\n  const campaignId = matchData.matchedCampaignId;\n\n  const requestContext = {\n    clientName: config.clientName,\n    campaignContext: config.campaignContext,\n    startDate: config.startDate,\n    endDate: config.endDate,\n    targetCampaignName: matchData.targetCampaignName,\n    platformName: 'HeyReach'\n  };\n\n  let campaignData = campaignDataMap[campaignId] || matchData.matchedCampaign || matchData;\n\n  // Stats: try by campaignId match, fall back to index\n  let statsData = { overallStats: {}, byDayStats: {} };\n  try {\n    const allStats = $('Retrieve overall statistics for found campaign').all();\n    if (allStats[idx]) statsData = allStats[idx].json;\n  } catch(e) {}\n\n  const inboxData = inboxMap[campaignId] || [];\n\nconst campaignConfig = { id: campaignData.id || matchData.matchedCampaignId, name: campaignData.name || matchData.matchedCampaignName, status: campaignData.status || 'Unknown', creationTime: campaignData.creationTime, senderAccountIds: campaignData.campaignAccountIds || [], senderCount: (campaignData.campaignAccountIds || []).length, progressStats: campaignData.progressStats || { totalUsers: 0, totalUsersInProgress: 0, totalUsersPending: 0, totalUsersFinished: 0, totalUsersFailed: 0, totalUsersManuallyStopped: 0, totalUsersExcluded: 0 } };\n\nconst overallStats = statsData.overallStats || {};\nconst analytics = { connectionsSent: overallStats.connectionsSent || 0, connectionsAccepted: overallStats.connectionsAccepted || 0, profileViews: overallStats.profileViews || 0, messagesSent: overallStats.messagesSent || 0, totalMessageStarted: overallStats.totalMessageStarted || 0, totalMessageReplies: overallStats.totalMessageReplies || 0, inmailMessagesSent: overallStats.inmailMessagesSent || 0, totalInmailStarted: overallStats.totalInmailStarted || 0, totalInmailReplies: overallStats.totalInmailReplies || 0, connectionAcceptanceRate: overallStats.connectionAcceptanceRate ? (overallStats.connectionAcceptanceRate * 100).toFixed(2) : '0.00', messageReplyRate: overallStats.messageReplyRate ? (overallStats.messageReplyRate * 100).toFixed(2) : '0.00', totalLeads: campaignConfig.progressStats.totalUsers, leadsFinished: campaignConfig.progressStats.totalUsersFinished, leadsFailed: campaignConfig.progressStats.totalUsersFailed, leadsInProgress: campaignConfig.progressStats.totalUsersInProgress, leadsPending: campaignConfig.progressStats.totalUsersPending, leadsExcluded: campaignConfig.progressStats.totalUsersExcluded };\n\nconst campaignAccountIds = campaignConfig.senderAccountIds;\nconst accountsAnalysis = { totalAccountsInCampaign: campaignAccountIds.length, accounts: [], activeCount: 0 };\naccountsData.forEach(account => {\n  if (campaignAccountIds.includes(account.id)) {\n    if (account.isActive === true) accountsAnalysis.activeCount++;\n    accountsAnalysis.accounts.push({ id: account.id, name: `${account.firstName || ''} ${account.lastName || ''}`.trim(), email: account.emailAddress, isActive: account.isActive, authIsValid: account.authIsValid });\n  }\n});\n\nconst sentimentKeywords = { positive: ['interested','yes','sure','love to','sounds good','happy to','schedule','call','meeting','tell me more','send more','great','perfect','excited','looking forward','thanks for reaching','keep me posted','next one'], negative: ['not interested','no thanks','no thank you','remove','stop','unsubscribe','spam','wrong person'], neutral: ['not now','bad timing','busy','maybe later','check back','next quarter'] };\nfunction classifySentiment(text) {\n  if (!text) return 'informational';\n  const l = text.toLowerCase();\n  for (const k of sentimentKeywords.positive) if (l.includes(k)) return 'positive';\n  for (const k of sentimentKeywords.negative) if (l.includes(k)) return 'negative';\n  for (const k of sentimentKeywords.neutral) if (l.includes(k)) return 'neutral';\n  return 'informational';\n}\n\nconst windowStartTs = requestContext.startDate ? new Date(requestContext.startDate).getTime() : 0;\nconst windowEndTs = requestContext.endDate ? new Date(requestContext.endDate).getTime() + 86400000 : Infinity;\nconst replyAnalysis = { totalConversations: inboxData.length, conversationsWithReplies: 0, totalReplies: 0, replies: [], sentimentBreakdown: { positive: [], neutral: [], negative: [], informational: [] } };\nconst leadsAnalysis = { totalLeads: analytics.totalLeads, byJobTitle: {}, byCompany: {}, connectedLeads: [], repliedLeads: [] };\nlet uniqueProspectsMeassaged = 0;\n\ninboxData.forEach(conversation => {\n  const profile = conversation.correspondentProfile || {};\n  const messages = conversation.messages || [];\n  const hasOutboundInWindow = messages.some(m => { if (m.sender !== 'ME') return false; const ts = new Date(m.createdAt || m.timestamp || 0).getTime(); return ts >= windowStartTs && ts <= windowEndTs; });\n  if (hasOutboundInWindow) uniqueProspectsMeassaged++;\n  const leadInfo = { name: `${profile.firstName || ''} ${profile.lastName || ''}`.trim(), company: profile.companyName || '', position: profile.position || profile.headline || '', location: profile.location || '', linkedInUrl: profile.profileUrl || '' };\n  if (leadInfo.company) leadsAnalysis.byCompany[leadInfo.company] = (leadsAnalysis.byCompany[leadInfo.company] || 0) + 1;\n  const correspondentReplies = messages.filter(m => m.sender === 'CORRESPONDENT');\n  const windowReplies = correspondentReplies.filter(m => { const ts = new Date(m.createdAt || m.timestamp || 0).getTime(); return ts >= windowStartTs && ts <= windowEndTs; });\n  if (windowReplies.length > 0) {\n    replyAnalysis.conversationsWithReplies++;\n    replyAnalysis.totalReplies += 1;\n    windowReplies.forEach(reply => {\n      const replyText = reply.body || '';\n      const sentiment = classifySentiment(replyText);\n      const replyRecord = { from: leadInfo.name, company: leadInfo.company, position: leadInfo.position, location: leadInfo.location, linkedInUrl: leadInfo.linkedInUrl, replyText: replyText, replyPreview: replyText.length > 300 ? replyText.substring(0, 300) + '...' : replyText, timestamp: reply.createdAt, sentiment };\n      replyAnalysis.replies.push(replyRecord);\n      leadsAnalysis.repliedLeads.push(leadInfo);\n      replyAnalysis.sentimentBreakdown[sentiment].push(replyRecord);\n    });\n  }\n  leadsAnalysis.connectedLeads.push(leadInfo);\n});\nanalytics.messagesSent = uniqueProspectsMeassaged;\n\nconst totalRepliesForSentiment = replyAnalysis.totalReplies || 1;\nreplyAnalysis.sentimentSummary = { positive: { count: replyAnalysis.sentimentBreakdown.positive.length }, neutral: { count: replyAnalysis.sentimentBreakdown.neutral.length }, negative: { count: replyAnalysis.sentimentBreakdown.negative.length }, informational: { count: replyAnalysis.sentimentBreakdown.informational.length } };\n\nconst reportData = { requestContext, platformType: 'linkedin', campaignConfig, analytics, leadsAnalysis: { totalLeads: leadsAnalysis.totalLeads, connectedCount: leadsAnalysis.connectedLeads.length, repliedCount: leadsAnalysis.repliedLeads.length, repliedLeads: leadsAnalysis.repliedLeads }, replyAnalysis, accountsAnalysis, generatedAt: new Date().toISOString() };\n\n  results.push({ json: { reportData, reportDataString: JSON.stringify(reportData, null, 2) } });\n}\n\nreturn results;"
+      },
+      "id": "272c0e4d-4ad6-46eb-aedb-b3d9f0bdb265",
+      "name": "Merge Heyreach Nodes Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 4,
+        "useDataOfInput": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        32,
+        1488
+      ],
+      "id": "b98fdf63-9208-4b4c-b0fa-07f60eb5dc72",
+      "name": "Merge all heyreach nodes data"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {
+          "maxOutputTokens": 6000,
+          "temperature": 0.3,
+          "topP": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        560,
+        1744
+      ],
+      "id": "cee39076-4eb2-493e-898b-f809a60d21a2",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "N5UZsFvSrjm5UYEh",
+          "name": "FF Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.matched }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9f3d8d94-c04f-48f0-8dbb-c1adbf342ee2",
+      "name": "Heyreach Campaign Existence Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -416,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#outbound-reporting-trial",
+          "mode": "name"
+        },
+        "text": "=❌ *Campaign Not Found - Instantly*\n\n*Client:* {{ $('Workflow Configuration').item.json.clientName }}\n*Searched For:* {{ $json.targetCampaignName }}\n*Platform:* Instantly\n\n*Issue:* The campaign \"{{ $json.targetCampaignName }}\" could not be found in your Instantly account.\n\n*Next Steps:*\n• Check the campaign name spelling\n• Verify the campaign exists in Instantly\n• Try again with the exact campaign name",
+        "otherOptions": {}
+      },
+      "id": "55f3fee0-5c30-4cc7-bf99-4f02c51e89d7",
+      "name": "Notify Campaign Not Found - Instantly",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        -192,
+        -48
+      ],
+      "webhookId": "8c04e5f4-df0b-4f44-a823-20dcec3230b5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "iBowE8nwtiGGIlMA",
+          "name": "Neeraj FF Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#outbound-reporting-trial",
+          "mode": "name"
+        },
+        "text": "=❌ *Campaign Not Found - HeyReach*\n\n*Client:* {{ $('Workflow Configuration').item.json.clientName }}\n*Searched For:* {{ $json.targetCampaignName }}\n*Platform:* HeyReach (LinkedIn)\n\n*Issue:* The campaign \"{{ $json.targetCampaignName }}\" could not be found in your HeyReach account.\n\n*Next Steps:*\n• Check the campaign name spelling\n• Verify the campaign exists in HeyReach\n• Try again with the exact campaign name",
+        "otherOptions": {}
+      },
+      "id": "6b065eb0-af8e-456b-9fb3-70b338da83e1",
+      "name": "Notify Campaign Not Found - Heyreach",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        -192,
+        1088
+      ],
+      "webhookId": "02c93d5a-d366-4541-a14b-6bed85158826",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "iBowE8nwtiGGIlMA",
+          "name": "Neeraj FF Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "68fc8516-9a62-407c-af5d-3236cc14ee64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1584,
+        1216
+      ],
+      "id": "dba27e44-c978-4276-9ab1-382b0eba87de",
+      "name": "Webhook",
+      "webhookId": "68fc8516-9a62-407c-af5d-3236cc14ee64"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this Instantly email campaign data and output structured JSON:\n\n{{ JSON.stringify($json.reportData, null, 2) }}",
+        "options": {
+          "systemMessage": "You are a FullFunnel outbound reporting analyst. Analyze the Instantly email campaign data provided and output a single structured JSON object — nothing else.\n\nOUTPUT RULES:\n- Output ONLY raw JSON. No markdown, no code fences, no text before or after.\n- All string values must be properly escaped for JSON.\n- Use null for missing data.\n\nCALCULATIONS:\n- Reply Rate = (reply_count_unique ÷ emails_sent_count) × 100, formatted as \"X.XX%\"\n- Bounce Rate = (bounced_count ÷ emails_sent_count) × 100, formatted as \"X.XX%\"\n- Auto-Reply Rate = (reply_count_automatic ÷ emails_sent_count) × 100, formatted as \"X.XX%\"\n- Emails Per Lead = (emails_sent_count ÷ uniqueLeadsContacted), formatted as \"X.XX\"\n- If emails_sent_count is 0, all rates = \"0.00%\" and emailsPerLead = null\n\nOPEN RATE RULE:\n- If open tracking is disabled or open counts are 0/null, set openRate to \"Not tracked — open tracking disabled\"\n- If open_count_unique > 0, calculate as (open_count_unique ÷ emails_sent_count) × 100 formatted as \"X.XX%\"\n\nBENCHMARK DEFINITIONS (for verdict and executive summary only):\n- Reply Rate >3% = Above Benchmark\n- Reply Rate 1–3% = At Benchmark\n- Reply Rate <1% = Below Benchmark\n- Bounce Rate <2% = Healthy, 2–5% = Monitor, >5% = Needs Attention\n- Open Rate <20% = Below Average, 20–40% = Typical, >40% = Strong\n\nEXECUTIVE SUMMARY RULES:\n- Max 2 sentences.\n- Sentence 1: State the overall performance verdict and what the data shows. If below benchmark, identify the most likely constraint (if unclear, say so). If at or above benchmark, identify key strengths. If campaign context was provided, weave it in.\n- Sentence 2: State the top-line numbers only (emails sent, leads, reply rate, bounce rate).\n- No recommendations. No next steps.\n\nREPLY HIGHLIGHTS RULES:\n- ONLY include replies from within the reporting window. Do NOT pull lifetime replies.\n- If humanReplies = 0, set hasReplies to false. Do not include counts or sentiment.\n- If humanReplies > 0, set hasReplies to true and include full detail with verbatim reply text.\n- Do not summarize or interpret replies. Use exact reply text.\n- Classify each reply: Positive, Neutral, Negative, or Informational.\n\nOUTPUT THIS EXACT JSON STRUCTURE:\n{\n  \"campaignName\": \"<targetCampaignName>\",\n  \"executiveSummary\": \"<2 sentences: verdict + constraint/strength, then numbers>\",\n  \"campaignOverview\": {\n    \"campaignName\": \"<campaign name>\",\n    \"status\": \"<campaign status>\",\n    \"reportingWindow\": \"<startDate to endDate>\",\n    \"senderAccounts\": \"<sender emails or count>\"\n  },\n  \"performanceScorecard\": {\n    \"emailsSent\": <number>,\n    \"uniqueLeadsContacted\": <number>,\n    \"replyRate\": \"<X.XX%>\",\n    \"bounceRate\": \"<X.XX%>\",\n    \"openRate\": \"<X.XX% or 'Not tracked — open tracking disabled'>\",\n    \"autoReplyRate\": \"<X.XX%>\",\n    \"emailsPerLead\": \"<X.XX or null>\"\n  },\n  \"replyHighlights\": {\n    \"hasReplies\": <true|false>,\n    \"totalReplies\": <number>,\n    \"humanReplies\": <number>,\n    \"sentimentBreakdown\": \"<e.g. 2 Positive, 1 Neutral — or null if no replies>\",\n    \"replies\": [\n      {\n        \"sentiment\": \"<Positive|Neutral|Negative|Informational>\",\n        \"name\": \"<First Last>\",\n        \"title\": \"<Job Title>\",\n        \"company\": \"<Company>\",\n        \"text\": \"<exact reply text verbatim>\"\n      }\n    ]\n  },\n  \"keyInsights\": {\n    \"verdict\": \"<Above Benchmark|At Benchmark|Below Benchmark>\",\n    \"primarySignal\": \"<1 data-supported sentence on what is driving performance>\",\n    \"whatsWorking\": [\"<bullet 1>\", \"<bullet 2 if applicable>\"],\n    \"areasToWatch\": [\"<bullet 1>\", \"<bullet 2 if applicable>\"]\n  }\n}\n\nRULES:\n- whatsWorking and areasToWatch: 1–2 bullets max each. Plain English, max 12 words per bullet. No percentages. No benchmark labels.\n- State only what the data directly shows. Do NOT use \"suggests\", \"could indicate\", \"is not resonating\", \"likely\", \"appears to\", or any causal interpretation. Facts only.\n- If emailsSent=0: set whatsWorking=[] — do not generate positive observations for inactive campaigns.\n- Do NOT generate recommendations or next steps.\n- Do NOT include Completion Rate or Warmup Score.\n- If no replies: hasReplies=false, totalReplies=0, humanReplies=0, sentimentBreakdown=null, replies=[]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        496,
+        368
+      ],
+      "id": "a2b4a848-09f5-452e-ba0c-ead6be17f7f1",
+      "name": "Instantly Outbound Reporting AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this HeyReach LinkedIn campaign data and output structured JSON:\n\n{{ JSON.stringify($json.reportData, null, 2) }}",
+        "options": {
+          "systemMessage": "You are a FullFunnel outbound reporting analyst. Analyze the HeyReach LinkedIn campaign data provided and output a single structured JSON object — nothing else.\n\nOUTPUT RULES:\n- Output ONLY raw JSON. No markdown, no code fences, no text before or after.\n- All string values must be properly escaped for JSON.\n- Use null for missing data.\n\nCALCULATIONS:\n- Connection Acceptance Rate = (connectionsAccepted ÷ connectionsSent) × 100, formatted as \"X.XX%\"\n- Messages Sent = number of messages/follow-ups sent to accepted connections during the window. Use the messagesSent field from analytics. If analytics shows 0 but connectionsAccepted > 0, use connectionsAccepted as the proxy for conversations started.\n- Message Reply Rate = (messageReplies ÷ messagesSent) × 100, formatted as \"X.XX%\". If messagesSent is 0, set to \"0.00%\".\n- Failure Rate = (leadsFailed ÷ totalLeads) × 100, formatted as \"X.XX%\"\n\nBENCHMARK DEFINITIONS:\n- Connection Acceptance: <15% = Below Benchmark, 15–25% = Typical, 25–35% = Strong, >35% = Very Strong\n- Message Reply Rate: <5% = Below Benchmark, 5–15% = Typical, 15–25% = Strong, >25% = Very Strong\n- Overall verdict: use connection acceptance AND reply rate together. Strong connection + replies = Above. Both weak = Below. Mixed = use judgement.\n\nEXECUTIVE SUMMARY RULES:\n- Max 2 sentences.\n- Sentence 1: State the overall performance verdict and what the data shows. If below benchmark, identify the most likely constraint (if unclear, say so). If at or above benchmark, identify key strengths. If campaign context was provided, weave it in.\n- Sentence 2: State the top-line numbers only (connection requests, accepted, reply count).\n- No recommendations. No next steps.\n\nREPLY HIGHLIGHTS RULES:\n- ONLY include replies from within the reporting window. Do NOT pull lifetime replies.\n- The conversationsWithReplies count MUST match messageReplies in the scorecard — use the same data source.\n- If conversationsWithReplies = 0, set hasReplies to false. Do not include counts or sentiment.\n- If conversationsWithReplies > 0, set hasReplies to true and include full verbatim detail.\n- Pull actual reply text verbatim from replyAnalysis.replies — do not summarize or interpret.\n- Classify each reply: Positive, Neutral, Negative, or Informational.\n\nOUTPUT THIS EXACT JSON STRUCTURE:\n{\n  \"campaignName\": \"<targetCampaignName>\",\n  \"executiveSummary\": \"<2 sentences: verdict + constraint/strength, then numbers>\",\n  \"campaignOverview\": {\n    \"platform\": \"LinkedIn (HeyReach)\",\n    \"status\": \"<campaign status>\",\n    \"reportingWindow\": \"<startDate to endDate>\",\n    \"senderAccounts\": \"<sender names>\"\n  },\n  \"performanceScorecard\": {\n    \"connectionRequestsSent\": <number>,\n    \"connectionsAccepted\": <plain number — no percentage suffix>,\n    \"connectionAcceptanceRate\": \"<X.XX%>\",\n    \"messagesSent\": <number>,\n    \"messageReplies\": <number>,\n    \"messageReplyRate\": \"<X.XX%>\",\n    \"failureRate\": \"<X.XX%>\"\n  },\n  \"replyHighlights\": {\n    \"hasReplies\": <true|false>,\n    \"conversationsWithReplies\": <number — must match messageReplies above>,\n    \"sentimentBreakdown\": \"<e.g. 1 Positive, 1 Informational — or null if no replies>\",\n    \"replies\": [\n      {\n        \"sentiment\": \"<Positive|Neutral|Negative|Informational>\",\n        \"name\": \"<First Last>\",\n        \"title\": \"<Job Title>\",\n        \"company\": \"<Company>\",\n        \"text\": \"<exact reply text verbatim>\"\n      }\n    ]\n  },\n  \"keyInsights\": {\n    \"verdict\": \"<Above Benchmark|At Benchmark|Below Benchmark>\",\n    \"primarySignal\": \"<1 data-supported sentence on what is driving performance>\",\n    \"whatsWorking\": [\"<bullet 1>\", \"<bullet 2 if applicable>\"],\n    \"areasToWatch\": [\"<bullet 1>\", \"<bullet 2 if applicable>\"]\n  }\n}\n\nRULES:\n- whatsWorking and areasToWatch: 1–2 bullets max each. Plain English, max 12 words per bullet. No benchmark labels.\n- State only what the data directly shows. Do NOT use \"suggests\", \"could indicate\", \"is not resonating\", \"likely\", \"appears to\", or any causal interpretation. Facts only.\n- If connectionRequestsSent=0 AND connectionsAccepted=0: set whatsWorking=[] — do not generate positive observations for inactive campaigns.\n- Do NOT reference data availability, data gaps, or API limitations in any field.\n- Do NOT generate recommendations or next steps.\n- If no replies: hasReplies=false, conversationsWithReplies=0, sentimentBreakdown=null, replies=[].\n- If replyAnalysis.replies is empty but analytics.totalMessageReplies > 0: set hasReplies=true, sentimentBreakdown=\"Inbox detail not available for this window.\", replies=[]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        480,
+        1520
+      ],
+      "id": "07dbcd3e-350a-413d-883c-c6964ccfb14d",
+      "name": "Heyreach Outbound Reporting AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse structured JSON output from Instantly AI Agent — one item per campaign\nconst config = $('Workflow Configuration').first().json;\nconst allItems = $input.all();\nconst matchItems = $('Match Instantly Campaign Name - Exist or not').all()\n  .filter(item => item.json.matched === true);\n\nconst results = [];\nfor (let i = 0; i < allItems.length; i++) {\n  const raw = allItems[i].json.output || allItems[i].json.text || '';\n  let parsed = {};\n  try {\n    const match = raw.match(/\\{[\\s\\S]*\\}/);\n    if (match) { parsed = JSON.parse(match[0]); }\n    else { parsed = { error: 'No JSON found in AI output', rawPreview: raw.slice(0, 300) }; }\n  } catch (e) { parsed = { error: e.message, rawPreview: raw.slice(0, 300) }; }\n\n  const targetCampaignName = matchItems[i]?.json.targetCampaignName || parsed.campaignName || `Campaign ${i + 1}`;\n\n  results.push({\n    json: {\n      instantlyData: { ...parsed, targetCampaignName, platform: 'instantly' },\n      targetCampaignName,\n      clientName: config.clientName,\n      startDate: config.startDate,\n      endDate: config.endDate\n    }\n  });\n}\nreturn results;"
+      },
+      "id": "4f369971-c943-4ecf-96de-9cd5b6f0e8fa",
+      "name": "Parse Instantly Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1216,
+        960
+      ],
+      "id": "1da981cb-0927-4723-9ffd-bf8770894e09",
+      "name": "Merge – Instantly + HeyReach"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse structured JSON output from HeyReach AI Agent — one item per campaign\nconst config = $('Workflow Configuration').first().json;\nconst allItems = $input.all();\nconst matchItems = $('Match Heyreach Campaign Name - Exist or not').all()\n  .filter(item => item.json.matched === true);\n\nconst results = [];\nfor (let i = 0; i < allItems.length; i++) {\n  const raw = allItems[i].json.output || allItems[i].json.text || '';\n  let parsed = {};\n  try {\n    const match = raw.match(/\\{[\\s\\S]*\\}/);\n    if (match) { parsed = JSON.parse(match[0]); }\n    else { parsed = { error: 'No JSON found in AI output', rawPreview: raw.slice(0, 300) }; }\n  } catch (e) { parsed = { error: e.message, rawPreview: raw.slice(0, 300) }; }\n\n  const targetCampaignName = matchItems[i]?.json.targetCampaignName || parsed.campaignName || `Campaign ${i + 1}`;\n\n  results.push({\n    json: {\n      heyreachData: { ...parsed, targetCampaignName, platform: 'heyreach' },\n      targetCampaignName,\n      clientName: config.clientName,\n      startDate: config.startDate,\n      endDate: config.endDate\n    }\n  });\n}\nreturn results;"
+      },
+      "id": "8103c12f-6d80-4532-948b-c95a2956ec5f",
+      "name": "Parse HeyReach Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// COMPOSE COMBINED REPORT — Dynamic Multi-Campaign v5\n// Aligned with FullFunnel Prompt Formatting Spec\n// ============================================================\nconst items = $input.all();\nconst config = $('Workflow Configuration').first().json;\n\nconst clientName = config.clientName || 'Unknown Client';\nconst startDate = config.startDate || '';\nconst endDate = config.endDate || '';\nconst campaignContext = config.campaignContext || '';\n\nconst instantlyCampaignNames = Array.isArray(config.instantlyCampaignNames) ? config.instantlyCampaignNames : [];\nconst heyReachCampaignNames = Array.isArray(config.heyReachCampaignNames) ? config.heyReachCampaignNames : [];\n\nconst instantlyItems = [];\nconst heyreachItems = [];\nconst instantlyLifetimeItems = [];\nconst heyreachLifetimeItems = [];\n\nfor (const item of items) {\n  const d = item.json || {};\n  if (d.instantlyData && typeof d.instantlyData === 'object' && !d.instantlyData.error) {\n    instantlyItems.push(d.instantlyData);\n  }\n  if (d.heyreachData && typeof d.heyreachData === 'object' && !d.heyreachData.error) {\n    heyreachItems.push(d.heyreachData);\n  }\n  if (d.instantlyLifetimeData) {\n    try { instantlyLifetimeItems.push(JSON.parse(d.instantlyLifetimeData)); } catch(e) {}\n  }\n  if (d.heyreachLifetimeData) {\n    try { heyreachLifetimeItems.push(JSON.parse(d.heyreachLifetimeData)); } catch(e) {}\n  }\n}\n\nconst norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst sortByOrder = (arr, nameList) => {\n  return [...arr].sort((a, b) => {\n    const nameA = a.targetCampaignName || a.campaignName || '';\n    const nameB = b.targetCampaignName || b.campaignName || '';\n    const findIdx = (name, list) => {\n      const nName = norm(name);\n      let idx = list.findIndex(n => norm(n) === nName);\n      if (idx === -1) idx = list.findIndex(n => nName.includes(norm(n)) || norm(n).includes(nName));\n      return idx === -1 ? 999 : idx;\n    };\n    return findIdx(nameA, nameList) - findIdx(nameB, nameList);\n  });\n};\n\nconst sortedInstantly = sortByOrder(instantlyItems, instantlyCampaignNames);\nconst sortedHeyreach = sortByOrder(heyreachItems, heyReachCampaignNames);\n\n// ── Renderers ────────────────────────────────────────────────\n\n// Section 2: Campaign Overview\n// Instantly: no Platform field, no duplicate campaign name\nconst renderInstantlyOverview = (d) => {\n  if (!d) return '';\n  const o = d.campaignOverview || {};\n  return [\n    'Status: ' + (o.status || 'Unknown'),\n    'Reporting Window: ' + (o.reportingWindow || startDate + ' to ' + endDate),\n    'Sender Accounts: ' + (o.senderAccounts || 'N/A')\n  ].join('\\n');\n};\n\n// HeyReach: keep Platform field, no duplicate campaign name\nconst renderHeyreachOverview = (d) => {\n  if (!d) return '';\n  const o = d.campaignOverview || {};\n  return [\n    'Platform: LinkedIn (HeyReach)',\n    'Status: ' + (o.status || 'Unknown'),\n    'Reporting Window: ' + (o.reportingWindow || startDate + ' to ' + endDate),\n    'Sender Accounts: ' + (o.senderAccounts || 'N/A')\n  ].join('\\n');\n};\n\n// Section 3: Scorecard\nconst renderInstantlyScorecard = (d) => {\n  if (!d) return '';\n  const s = d.performanceScorecard || {};\n  return [\n    'Emails Sent: ' + (s.emailsSent ?? 'N/A'),\n    'Unique Leads Contacted: ' + (s.uniqueLeadsContacted ?? 'N/A'),\n    'Reply Rate: ' + (s.replyRate ?? 'N/A'),\n    'Bounce Rate: ' + (s.bounceRate ?? 'N/A'),\n    'Open Rate: ' + (s.openRate ?? 'N/A'),\n    'Auto-Reply Rate: ' + (s.autoReplyRate ?? 'N/A'),\n    'Emails Per Lead: ' + (s.emailsPerLead ?? 'N/A')\n  ].join('\\n');\n};\n\n// HeyReach: simplified 7-field scorecard per updated spec\nconst renderHeyreachScorecard = (d) => {\n  if (!d) return '';\n  const s = d.performanceScorecard || {};\n  return [\n    'Connection Requests Sent: ' + (s.connectionRequestsSent ?? 'N/A'),\n    'Connections Accepted: ' + (s.connectionsAccepted ?? 'N/A'),\n    'Connection Acceptance Rate: ' + (s.connectionAcceptanceRate ?? 'N/A'),\n    'Messages Sent: ' + (s.messagesSent ?? 'N/A'),\n    'Message Replies: ' + (s.messageReplies ?? 'N/A'),\n    'Message Reply Rate: ' + (s.messageReplyRate ?? 'N/A'),\n    'Failure Rate: ' + (s.failureRate ?? 'N/A')\n  ].join('\\n');\n};\n\n// Section 4: Reply Highlights\n// Only show detail if hasReplies = true, otherwise single line only\nconst renderReplies = (rh, isInstantly) => {\n  const noReplyMsg = isInstantly\n    ? 'No human replies received during this reporting window.'\n    : 'No replies received during this reporting window.';\n\n  if (!rh || !rh.hasReplies) return noReplyMsg;\n\n  const lines = [];\n  const replies = rh.replies || [];\n\n  if (isInstantly) {\n    lines.push('Total Replies Received: ' + (rh.totalReplies ?? 0));\n    lines.push('Human Replies: ' + (rh.humanReplies ?? 0));\n  } else {\n    lines.push('Conversations With Replies: ' + (rh.conversationsWithReplies ?? 0));\n  }\n\n  if (rh.sentimentBreakdown) {\n    lines.push('Sentiment Breakdown: ' + rh.sentimentBreakdown);\n  }\n\n  if (replies.length > 0) {\n    lines.push('');\n    replies.forEach(r => {\n      lines.push('[' + (r.sentiment || 'Unknown').toUpperCase() + '] ' + (r.name || '') + ', ' + (r.title || '') + ' @ ' + (r.company || ''));\n      lines.push('\"' + (r.text || '') + '\"');\n      lines.push('');\n    });\n  }\n\n  return lines.join('\\n').trim();\n};\n\n// Section 5: Key Insights\nconst renderKeyInsights = (d) => {\n  if (!d) return '';\n  const ki = d.keyInsights || {};\n  const lines = [];\n  if (ki.verdict) lines.push('Performance Verdict: ' + ki.verdict);\n  if (ki.primarySignal) lines.push('Primary Signal: ' + ki.primarySignal);\n  if (ki.whatsWorking && ki.whatsWorking.length) {\n    lines.push(\"What's Working:\");\n    ki.whatsWorking.forEach(b => lines.push('• ' + b));\n  }\n  if (ki.areasToWatch && ki.areasToWatch.length) {\n    lines.push('Areas to Watch:');\n    ki.areasToWatch.forEach(b => lines.push('• ' + b));\n  }\n  return lines.join('\\n');\n};\n\n\n// Lifetime renderers\nconst renderInstantlyLifetime = (d) => {\n  if (!d) return '';\n  const sent = d.emails_sent_count || 0;\n  const pct = (n) => sent > 0 ? ((n / sent) * 100).toFixed(2) + '%' : '0.00%';\n  const lines = [\n    'Emails Sent: ' + (sent || 'N/A'),\n    'Unique Leads Contacted: ' + (d.leads_count ?? 'N/A'),\n    'Unique Replies: ' + (d.reply_count_unique ?? 'N/A'),\n    'Reply Rate: ' + pct(d.reply_count_unique || 0),\n    'Bounces: ' + (d.bounced_count ?? 'N/A'),\n    'Bounce Rate: ' + pct(d.bounced_count || 0),\n    'Auto-Replies: ' + (d.reply_count_automatic ?? 'N/A'),\n    'Auto-Reply Rate: ' + pct(d.reply_count_automatic || 0)\n  ];\n  if (d.open_count_unique > 0) {\n    lines.push('Unique Opens: ' + d.open_count_unique);\n    lines.push('Open Rate: ' + pct(d.open_count_unique));\n  } else {\n    lines.push('Open Rate: Not tracked — open tracking disabled');\n  }\n  return lines.join('\\n');\n};\n\nconst renderHeyreachLifetime = (d) => {\n  if (!d) return '';\n  const os = d.overallStats || {};\n  const pct = (n) => n != null ? (parseFloat(n) * 100).toFixed(2) + '%' : 'N/A';\n  const lines = [\n    'Connection Requests Sent: ' + (os.connectionsSent ?? 'N/A'),\n    'Connections Accepted: ' + (os.connectionsAccepted ?? 'N/A'),\n    'Connection Acceptance Rate: ' + pct(os.connectionAcceptanceRate),\n    'Messages Sent: ' + (os.messagesSent ?? 'N/A'),\n    'Message Replies: ' + (os.totalMessageReplies ?? 'N/A'),\n    'Message Reply Rate: ' + pct(os.messageReplyRate),\n    'Profile Views: ' + (os.profileViews ?? 'N/A')\n  ];\n  if (os.inmailMessagesSent) {\n    lines.push('InMail Sent: ' + os.inmailMessagesSent);\n    lines.push('InMail Replies: ' + (os.totalInmailReplies ?? 'N/A'));\n  }\n  return lines.join('\\n');\n};\n\n// ── Build Document ────────────────────────────────────────────\nconst doc = [];\nconst DIV = '═══════════════════════════════════════';\nconst SUB = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';\n\n// Header\ndoc.push(clientName + ' // Combined Outbound Report');\ndoc.push('Client: ' + clientName);\ndoc.push('Date Range: ' + startDate + ' to ' + endDate);\ndoc.push('');\ndoc.push('Instantly Campaigns:');\nsortedInstantly.forEach(c => doc.push('• ' + (c.targetCampaignName || c.campaignName || '')));\ndoc.push('');\ndoc.push('HeyReach Campaigns:');\nsortedHeyreach.forEach(c => doc.push('• ' + (c.targetCampaignName || c.campaignName || '')));\ndoc.push('');\ndoc.push(DIV);\n\n// SECTION 1: EXECUTIVE SUMMARY\ndoc.push('SECTION 1: EXECUTIVE SUMMARY');\ndoc.push(DIV);\ndoc.push('');\ndoc.push('INSTANTLY');\ndoc.push(SUB);\nfor (const d of sortedInstantly) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(d.executiveSummary || '');\n  doc.push('');\n}\ndoc.push('HEYREACH');\ndoc.push(SUB);\nfor (const d of sortedHeyreach) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(d.executiveSummary || '');\n  doc.push('');\n}\ndoc.push(DIV);\n\n// SECTION 2: CAMPAIGN OVERVIEW\ndoc.push('SECTION 2: CAMPAIGN OVERVIEW');\ndoc.push(DIV);\ndoc.push('');\ndoc.push('INSTANTLY');\ndoc.push(SUB);\nfor (const d of sortedInstantly) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderInstantlyOverview(d));\n  doc.push('');\n}\ndoc.push('HEYREACH');\ndoc.push(SUB);\nfor (const d of sortedHeyreach) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderHeyreachOverview(d));\n  doc.push('');\n}\ndoc.push(DIV);\n\n// SECTION 3: PERFORMANCE SCORECARD\ndoc.push('SECTION 3: PERFORMANCE SCORECARD');\ndoc.push(DIV);\ndoc.push('');\ndoc.push('INSTANTLY');\ndoc.push(SUB);\nfor (const d of sortedInstantly) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderInstantlyScorecard(d));\n  doc.push('');\n}\ndoc.push('HEYREACH');\ndoc.push(SUB);\nfor (const d of sortedHeyreach) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderHeyreachScorecard(d));\n  doc.push('');\n}\ndoc.push(DIV);\n\n// SECTION 4: REPLY HIGHLIGHTS\ndoc.push('SECTION 4: REPLY HIGHLIGHTS');\ndoc.push(DIV);\ndoc.push('');\ndoc.push('INSTANTLY');\ndoc.push(SUB);\nfor (const d of sortedInstantly) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderReplies(d.replyHighlights, true));\n  doc.push('');\n}\ndoc.push('HEYREACH');\ndoc.push(SUB);\nfor (const d of sortedHeyreach) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderReplies(d.replyHighlights, false));\n  doc.push('');\n}\ndoc.push(DIV);\n\n// SECTION 5: KEY INSIGHTS\ndoc.push('SECTION 5: KEY INSIGHTS');\ndoc.push(DIV);\ndoc.push('');\ndoc.push('INSTANTLY');\ndoc.push(SUB);\nfor (const d of sortedInstantly) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderKeyInsights(d));\n  doc.push('');\n}\ndoc.push('HEYREACH');\ndoc.push(SUB);\nfor (const d of sortedHeyreach) {\n  doc.push(d.targetCampaignName || d.campaignName || '');\n  doc.push(renderKeyInsights(d));\n  doc.push('');\n}\ndoc.push(DIV);\n\n// SECTION 6: RECOMMENDATIONS (blank — filled by MDs)\ndoc.push('SECTION 6: RECOMMENDATIONS');\ndoc.push(DIV);\ndoc.push('Leave this section blank. Recommendations are provided by the account team.');\ndoc.push('');\ndoc.push(DIV);\n\n// SECTION 7: LIFETIME CAMPAIGN ANALYTICS\ndoc.push('SECTION 7: LIFETIME CAMPAIGN ANALYTICS');\ndoc.push(DIV);\ndoc.push('');\ndoc.push('INSTANTLY (Lifetime — campaign creation to today)');\ndoc.push(SUB);\nif (instantlyLifetimeItems.length === 0) {\n  doc.push('No lifetime data available.');\n  doc.push('');\n} else {\n  for (const d of instantlyLifetimeItems) {\n    doc.push(d.campaign_name || 'Unknown Campaign');\n    doc.push(renderInstantlyLifetime(d));\n    doc.push('');\n  }\n}\ndoc.push('HEYREACH (Lifetime — campaign creation to today)');\ndoc.push(SUB);\nif (heyreachLifetimeItems.length === 0) {\n  doc.push('No lifetime data available.');\n  doc.push('');\n} else {\n  for (const d of heyreachLifetimeItems) {\n    doc.push(d.campaign_name || d.name || 'Unknown Campaign');\n    doc.push(renderHeyreachLifetime(d));\n    doc.push('');\n  }\n}\ndoc.push(DIV);\n\n// COMBINED READOUT\ndoc.push('COMBINED READOUT');\ndoc.push('');\ndoc.push('{{COMBINED_READOUT}}');\ndoc.push('');\ndoc.push('--- END OF DOCUMENT ---');\n\nconst documentText = doc.join('\\n');\n\nconst campaignSummaries = [\n  ...sortedInstantly.map(d => ({\n    platform: 'Instantly',\n    label: d.targetCampaignName || d.campaignName || '',\n    verdict: d.keyInsights ? d.keyInsights.verdict || null : null,\n    summary: d.executiveSummary || null,\n    topSignals: d.replyHighlights ? (d.replyHighlights.sentimentBreakdown || null) : null\n  })),\n  ...sortedHeyreach.map(d => ({\n    platform: 'HeyReach',\n    label: d.targetCampaignName || d.campaignName || '',\n    verdict: d.keyInsights ? d.keyInsights.verdict || null : null,\n    summary: d.executiveSummary || null,\n    topSignals: d.replyHighlights ? (d.replyHighlights.sentimentBreakdown || null) : null\n  }))\n];\n\nconst instantlyCampaignName = sortedInstantly.map(c => c.targetCampaignName || c.campaignName || '').filter(Boolean).join(', ') || '(none)';\nconst heyreachCampaignName = sortedHeyreach.map(c => c.targetCampaignName || c.campaignName || '').filter(Boolean).join(', ') || '(none)';\n\nreturn [{ json: { documentText, campaignSummaries, clientName, startDate, endDate, campaignContext, instantlyCampaignName, heyreachCampaignName } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        960
+      ],
+      "id": "635309a2-3200-483f-9f80-159a1a4a7854",
+      "name": "Compose Combined Report"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Client: {{ $json.clientName }}\nDate Range: {{ $json.startDate }} to {{ $json.endDate }}\n{{ $json.campaignContext ? 'Additional context: ' + $json.campaignContext : '' }}\n\nCampaign performance data:\n{{ JSON.stringify($json.campaignSummaries, null, 2) }}\n\nWrite the Combined Readout paragraph now.",
+        "options": {
+          "systemMessage": "You are a senior outbound marketing analyst writing a Combined Readout paragraph for a FullFunnel client report.\n\nYour job: Write exactly 3 sentences. No more.\n\nSENTENCE STRUCTURE:\n- Sentence 1: Overall cross-platform verdict. 'Across the [N] [Client] campaigns, [Email result] and [LinkedIn result].'\n- Sentence 2: Name the one standout (best or worst) campaign by label and state the single clearest reason why.\n- Sentence 3: The one conclusion the full dataset supports — stated as fact, not recommendation.\n\nHARD RULES:\n- Do NOT mention any numbers, percentages, or rates — the reader already saw those\n- Do NOT go campaign-by-campaign\n- Do NOT use the words: recommend, priority, should, must, need, require, action, remediation, fix, revise\n- Do NOT include headers, bullets, or any label before the paragraph\n- Output ONLY the 3-sentence paragraph — nothing else"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1632,
+        736
+      ],
+      "id": "366532ba-e036-4877-a5f8-8706ab462174",
+      "name": "Combined Readout AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {
+          "maxOutputTokens": 1000,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        912
+      ],
+      "id": "bfcdc595-fc2b-40eb-85e1-579809c0adf5",
+      "name": "Combined Readout Gemini Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "N5UZsFvSrjm5UYEh",
+          "name": "FF Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Replace {{COMBINED_READOUT}} placeholder with AI-generated synthesis\nconst compose = $('Compose Combined Report').first().json;\nconst synthesis = ($json.output || $json.text || '').trim();\n\nconst finalDoc = compose.documentText.replace('{{COMBINED_READOUT}}', synthesis);\n\nreturn [{\n  json: {\n    output: finalDoc,\n    clientName: compose.clientName,\n    startDate: compose.startDate,\n    endDate: compose.endDate,\n    instantlyCampaignName: compose.instantlyCampaignName,\n    heyreachCampaignName: compose.heyreachCampaignName\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        736
+      ],
+      "id": "71954926-9977-4b19-a042-0df6b557494f",
+      "name": "Finalize Document"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.output }}",
+        "format": "document",
+        "additionalOptions": {
+          "additionalInstructions": "STRICT RULES — follow exactly:\n1. This document contains EXACTLY 6 sections: SECTION 1 (EXECUTIVE SUMMARY), SECTION 2 (CAMPAIGN OVERVIEW), SECTION 3 (PERFORMANCE SCORECARD), SECTION 4 (REPLY HIGHLIGHTS), SECTION 5 (KEY INSIGHTS), and COMBINED READOUT. No other sections exist.\n2. Each section has two platform blocks: Instantly first, then HeyReach. Each campaign name within a block = one card. Do NOT merge campaigns together, and do NOT combine Instantly and HeyReach into a single card.\n3. ABSOLUTELY PROHIBITED section names — do not create any section with these words regardless of how it is titled: \"Health\", \"Diagnostic\", \"Recommended\", \"Next Steps\", \"Action\", \"Action Plan\", \"Priorities\", \"To-Do\", \"Roadmap\", \"Summary Table\", \"Combined Performance\", \"Portfolio\", \"Glance\". If a section title contains any of these words, do not create it.\n4. There is NO section between SECTION 5 (KEY INSIGHTS) and COMBINED READOUT. If you feel the urge to add one, do not.\n5. The COMBINED READOUT section contains ONE thing only: a single paragraph of plain text. After that paragraph, the document ends. Do NOT add numbered items, action steps, bullet points, or any other content after the paragraph — not on the same page, not on a new page. The paragraph is the last piece of content in the entire document.\n6. The title slide must show the full title exactly as written (e.g. \"RIX Rx // Combined Outbound Report\"). Do NOT shorten or alter it.\n7. SECTION 3 (PERFORMANCE SCORECARD) may use tables and charts to display data.\n8. Do NOT add closing slides, footer cards, or any content not present in the source text."
+        },
+        "requestOptions": {}
+      },
+      "type": "@gammatech/n8n-nodes-gamma.gamma",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        1200
+      ],
+      "id": "b5e20a9f-cfc0-4920-b805-3522c4dd0aa7",
+      "name": "Gamma Instantly Doc",
+      "credentials": {
+        "gammaApi": {
+          "id": "kbbc5pgNuzrrXxev",
+          "name": "Gamma account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getStatus",
+        "generationId": "={{ $json.generationId }}",
+        "requestOptions": {}
+      },
+      "type": "@gammatech/n8n-nodes-gamma.gamma",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        1200
+      ],
+      "id": "ee59ab2f-7e47-4fad-9983-2747906d8da4",
+      "name": "Gamma Get URL1",
+      "credentials": {
+        "gammaApi": {
+          "id": "kbbc5pgNuzrrXxev",
+          "name": "Gamma account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        1200
+      ],
+      "id": "3d27fec5-caaf-43ff-a561-b8044f0cd7bc",
+      "name": "Wait",
+      "webhookId": "558598d5-3272-4113-b022-a3787b460cd6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8f4361c7-4197-4c01-b2be-826b461eb153",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2208,
+        1200
+      ],
+      "id": "f2ebf00b-3e93-4fc7-a8cc-951e4147e63f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c0683e7-945c-45b5-94e3-f97a3c61930f",
+              "name": "gammaUrl",
+              "value": "={{ $json.gammaUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2464,
+        1184
+      ],
+      "id": "0001cdec-0dbc-43e5-8c08-0142a526cf10",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.output }}",
+        "name": "={{ $json.clientName }} - Combined Outbound Report ({{ $json.startDate }} to {{ $json.endDate }}) - {{ $now.format('yyyy-MM-dd') }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1aomXlzyDE4UVP1PvjlRicahHbuq-7C-u"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1632,
+        960
+      ],
+      "id": "87ba8306-e02e-4f30-b543-2d516f25f9e2",
+      "name": "Create combined report from text",
+      "retryOnFail": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Ocr01T0c1yRUzjrQ",
+          "name": "Google Drive FF Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#outbound-reporting-trial",
+          "mode": "name"
+        },
+        "text": "=:bar_chart: *Combined Outbound Report Ready*\n\n*Client:* {{ $('Compose Combined Report').item.json.clientName }}\n*Instantly:* {{ $('Compose Combined Report').item.json.instantlyCampaignName }}\n*HeyReach:* {{ $('Compose Combined Report').item.json.heyreachCampaignName }}\n*Date Range:* {{ $('Compose Combined Report').item.json.startDate }} to {{ $('Compose Combined Report').item.json.endDate }}\n\n📄 *Full Report (Google Doc):* https://drive.google.com/file/d/{{ $json.id }}/view?usp=drive_link",
+        "otherOptions": {}
+      },
+      "id": "8364f841-24cc-4231-a4fe-a21dc7175164",
+      "name": "Send combined report to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1840,
+        960
+      ],
+      "webhookId": "a6ff4708-aa37-4360-910f-b0fa6cef2531",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "iBowE8nwtiGGIlMA",
+          "name": "Neeraj FF Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#outbound-reporting-trial",
+          "mode": "name"
+        },
+        "text": "=📄 *Gamma Document Ready*\n\n{{ $json.gammaUrl }}\n\n*Client:* {{ $('Compose Combined Report').item.json.clientName }}\n*Instantly:* {{ $('Compose Combined Report').item.json.instantlyCampaignName }}\n*HeyReach:* {{ $('Compose Combined Report').item.json.heyreachCampaignName }}\n*Date Range:* {{ $('Compose Combined Report').item.json.startDate }} to {{ $('Compose Combined Report').item.json.endDate }}",
+        "otherOptions": {}
+      },
+      "id": "b850966f-54c6-403d-b3a5-7c547e57b3c1",
+      "name": "Send combined report to Slack2",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        2672,
+        1184
+      ],
+      "webhookId": "2f6285ad-d7b1-4ee4-a17b-b075e0443a8e",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "iBowE8nwtiGGIlMA",
+          "name": "Neeraj FF Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "analytics",
+        "campaignId": {
+          "__rl": true,
+          "value": "={{ $json.matchedCampaign.id }}",
+          "mode": "id"
+        },
+        "startDate": "={{ $json.matchedCampaign.timestamp_created }}",
+        "endDate": "={{ $now.format('yyyy-MM-dd') }}"
+      },
+      "type": "n8n-nodes-instantly.instantly",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        896
+      ],
+      "id": "7b4eb30f-3562-48ed-8a1e-7bb7a587b56c",
+      "name": "Get Lifetime Campaign Analytics",
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "instantly-lifetime-field",
+              "name": "instantlyLifetimeData",
+              "value": "={{ JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8a50688e-a70f-4239-b353-64016ffcd97c",
+      "name": "Set – Instantly Lifetime Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "stats",
+        "campaignIds": [
+          "={{ $json.matchedCampaignId }}"
+        ],
+        "additionalFields": {
+          "startDate": "={{ $json.matchedCampaign && $json.matchedCampaign.creationTime ? $json.matchedCampaign.creationTime.split('T')[0] : '2020-01-01' }}",
+          "endDate": "={{ $now.format('yyyy-MM-dd') }}"
+        },
+        "requestOptions": {}
+      },
+      "id": "a55d7c55-39c9-4b5e-97d9-08e4f715ad9b",
+      "name": "Get HeyReach Lifetime Analytics",
+      "type": "n8n-nodes-heyreach.heyReach",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1264
+      ],
+      "credentials": {
+        "heyReachApi": {
+          "id": "94bOp6uYmTijNIjD",
+          "name": "Constellation Heyreach Account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "heyreach-lifetime-field",
+              "name": "heyreachLifetimeData",
+              "value": "={{ JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "101ef68e-46bf-4ee8-b78f-95db43656ac5",
+      "name": "Set – HeyReach Lifetime Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.instantly.ai/api/v2/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "instantlyApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "campaign_id",
+              "value": "={{ $json.matchedCampaign.id }}"
+            },
+            {
+              "name": "email_type",
+              "value": "received"
+            },
+            {
+              "name": "mode",
+              "value": "emode_focused"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "10f28068-542a-4b60-8eb8-c349e8f9b974",
+      "name": "Get Campaign Replies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        -208
+      ],
+      "credentials": {
+        "instantlyApi": {
+          "id": "n57w755OuAnzsLCS",
+          "name": "Constellation Instantly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## FullFunnel Outbound Reporting v2 — Dynamic Multi-Campaign\n\nThis workflow dynamically handles any number of Instantly + HeyReach campaigns.\n\n**How it works:**\n1. Form: enter client name, select campaigns\n2. Campaigns are paired by position — Instantly[i] + HeyReach[i] = one brand group\n3. Each AI agent outputs structured JSON (not prose) — no manual fixing needed\n4. Compose Combined Report assembles the full document dynamically\n5. Combined Readout AI generates the cross-campaign synthesis paragraph\n6. Finalize Document inserts the synthesis and outputs the complete report\n7. Outputs: Google Drive doc + Gamma presentation + Slack notification\n\n**To use for a new client:**\n- Update the Instantly Campaigns and HeyReach Campaigns checkbox options in the form\n- Or use the 'Other / Custom' text fields for campaign names not in the list\n- Campaign names are used automatically as section headers — no extra labeling needed"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1296,
+        560
+      ],
+      "typeVersion": 1,
+      "id": "bf3448b8-96bf-46e3-ae9e-42e238f63d1b",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Report Request Form": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Get many campaigns",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Retrieve all campaigns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many campaigns": {
+      "main": [
+        [
+          {
+            "node": "Match Instantly Campaign Name - Exist or not",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get matched campaign data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Campaign Analytics": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get all leads": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Get all accounts": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Instantly Outbound Reporting AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instantly Campaign Existence Check": {
+      "main": [
+        [
+          {
+            "node": "Get Campaign Analytics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get all leads",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get all accounts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get matched campaign data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Lifetime Campaign Analytics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Campaign Replies",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Campaign Not Found - Instantly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve found campaign data": {
+      "main": [
+        [
+          {
+            "node": "Merge all heyreach nodes data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve all campaigns": {
+      "main": [
+        [
+          {
+            "node": "Match Heyreach Campaign Name - Exist or not",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Report Data": {
+      "main": [
+        [
+          {
+            "node": "Instantly Outbound Reporting AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Instantly Campaign Name - Exist or not": {
+      "main": [
+        [
+          {
+            "node": "Instantly Campaign Existence Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Heyreach Campaign Name - Exist or not": {
+      "main": [
+        [
+          {
+            "node": "Heyreach Campaign Existence Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve overall statistics for found campaign": {
+      "main": [
+        [
+          {
+            "node": "Merge all heyreach nodes data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Retrieve all LinkedIn accounts": {
+      "main": [
+        [
+          {
+            "node": "Merge all heyreach nodes data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Retrieve inbox messages for found campaign": {
+      "main": [
+        [
+          {
+            "node": "Merge all heyreach nodes data",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge all heyreach nodes data": {
+      "main": [
+        [
+          {
+            "node": "Merge Heyreach Nodes Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Heyreach Nodes Data": {
+      "main": [
+        [
+          {
+            "node": "Heyreach Outbound Reporting AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instantly Outbound Reporting AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Instantly Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Heyreach Outbound Reporting AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Heyreach Outbound Reporting AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse HeyReach Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Heyreach Campaign Existence Check": {
+      "main": [
+        [
+          {
+            "node": "Retrieve found campaign data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Retrieve overall statistics for found campaign",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Retrieve all LinkedIn accounts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Retrieve inbox messages for found campaign",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get HeyReach Lifetime Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Campaign Not Found - Heyreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gamma Instantly Doc": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gamma Get URL1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Gamma Get URL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send combined report to Slack2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Instantly Output": {
+      "main": [
+        [
+          {
+            "node": "Merge – Instantly + HeyReach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse HeyReach Output": {
+      "main": [
+        [
+          {
+            "node": "Merge – Instantly + HeyReach",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge – Instantly + HeyReach": {
+      "main": [
+        [
+          {
+            "node": "Compose Combined Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Combined Report": {
+      "main": [
+        [
+          {
+            "node": "Combined Readout AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combined Readout Gemini Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Combined Readout AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combined Readout AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Finalize Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Document": {
+      "main": [
+        [
+          {
+            "node": "Create combined report from text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gamma Instantly Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create combined report from text": {
+      "main": [
+        [
+          {
+            "node": "Send combined report to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lifetime Campaign Analytics": {
+      "main": [
+        [
+          {
+            "node": "Set – Instantly Lifetime Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set – Instantly Lifetime Data": {
+      "main": [
+        [
+          {
+            "node": "Merge – Instantly + HeyReach",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Get HeyReach Lifetime Analytics": {
+      "main": [
+        [
+          {
+            "node": "Set – HeyReach Lifetime Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set – HeyReach Lifetime Data": {
+      "main": [
+        [
+          {
+            "node": "Merge – Instantly + HeyReach",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Get Campaign Replies": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "252b629d-b68d-48f2-982b-3127d0db16f0",
+  "meta": {
+    "instanceId": "5585dcd29dd5ea561f45c4e21dece59bdcdfcd3fa6daf6b2956bc9bae3fd843a"
+  },
+  "id": "3c5xERBwkaIMLkqa",
+  "tags": [
+    {
+      "updatedAt": "2025-12-13T19:53:59.323Z",
+      "createdAt": "2025-12-13T19:53:59.323Z",
+      "id": "wZdAqB2bUc0nuNgs",
+      "name": "Campaign Analysis"
+    }
+  ]
+}

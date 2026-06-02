@@ -1,0 +1,345 @@
+{
+  "name": "FF Closed Won/Lost ICP Intelligence Report v2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "readAllRows",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Clay Export",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "read-clay-sheet",
+      "name": "Read Clay Export",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "SETUP REQUIRED:\n1. Replace YOUR_GOOGLE_SHEET_ID_HERE with your actual Google Sheet ID.\n2. Paste the full Clay CSV export into a tab named 'Clay Export'.\n\nAll 74 columns are used directly \u2014 no second sheet needed.\n\nKey columns consumed by this workflow:\n  Deal Outcome, Amount, Service Line, Deal owner,\n  Close Date, Create Date, All Company Name,\n  Revenue_Tier, Company_Size_Tier, Industry_Tier,\n  Type with Fallback, Country with Fallback, State,\n  Crm Platform, Has Revops Function, Marketing Automation,\n  Sales Engagement, Normalized_Lost_Reason, Sales_Cycle_Days"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Clean + Enrich\n// - Strips '(Deactivated User)' from rep names\n// - Derives Year, Quarter, YearQuarter from Close Date\n// - Normalises CRM platform variants\n// - Fills nulls with sensible defaults\n// - Excludes any residual NURTURE_EXCLUDE rows\n// - Service Line removed (no longer tracked at Full Funnel)\n// ============================================================\n\nconst rows = $input.all().map(item => item.json);\nconst cleaned = [];\n\nfor (const row of rows) {\n  const outcome = (row['Deal Outcome'] || '').trim().toUpperCase();\n\n  // Safety net: exclude nurture if any slipped through\n  if (outcome === 'NURTURE_EXCLUDE' || !outcome) continue;\n\n  // ---- Rep name: strip deactivated suffix --------------------\n  const rawOwner = (row['Deal owner'] || 'Unknown').trim();\n  const dealOwner = rawOwner.replace(/\\s*\\(Deactivated User\\)/gi, '').trim() || 'Unknown';\n\n  // ---- Dates & time derivations ------------------------------\n  const closeDateRaw  = (row['Close Date']  || '').trim();\n  const createDateRaw = (row['Create Date'] || '').trim();\n\n  let year        = 'Unknown';\n  let quarter     = 'Unknown';\n  let yearQuarter = 'Unknown';\n\n  if (closeDateRaw) {\n    const d = new Date(closeDateRaw);\n    if (!isNaN(d)) {\n      year = d.getFullYear().toString();\n      const m = d.getMonth();\n      if      (m <= 2) quarter = 'Q1';\n      else if (m <= 5) quarter = 'Q2';\n      else if (m <= 8) quarter = 'Q3';\n      else             quarter = 'Q4';\n      yearQuarter = year + '-' + quarter;\n    }\n  }\n\n  // ---- CRM platform normalisation ----------------------------\n  const crmRaw   = (row['Crm Platform'] || '').trim();\n  const crmLower = crmRaw.toLowerCase();\n  let crmNorm;\n  if      (!crmRaw)                                       crmNorm = 'Unknown';\n  else if (crmLower.indexOf('salesforce') !== -1)         crmNorm = 'Salesforce';\n  else if (crmLower.indexOf('hubspot') !== -1)            crmNorm = 'HubSpot';\n  else if (crmLower.indexOf('microsoft dynamics') !== -1) crmNorm = 'Microsoft Dynamics';\n  else if (crmLower.indexOf('zoho') !== -1)               crmNorm = 'Zoho';\n  else if (crmLower.indexOf('pipedrive') !== -1)          crmNorm = 'Pipedrive';\n  else                                                    crmNorm = 'Other';\n\n  const amount         = parseFloat(row['Amount']) || 0;\n  const salesCycleDays = parseFloat(row['Sales_Cycle_Days']);\n  const salesCycle     = (!isNaN(salesCycleDays) && salesCycleDays > 0) ? salesCycleDays : null;\n\n  const revopsRaw = (row['Has Revops Function'] || '').toString().trim().toLowerCase();\n  let hasRevops;\n  if      (revopsRaw === 'true')  hasRevops = 'Has RevOps';\n  else if (revopsRaw === 'false') hasRevops = 'No RevOps';\n  else                            hasRevops = 'Unknown';\n\n  cleaned.push({\n    dealName:        (row['Deal Name'] || '').trim(),\n    companyName:     (row['All Company Name'] || row['Associated Company'] || '').trim(),\n    outcome:         outcome,\n    isWon:           outcome === 'CLOSED_WON',\n    amount:          amount,\n    dealOwner:       dealOwner,\n    closeDate:       closeDateRaw,\n    createDate:      createDateRaw,\n    year:            year,\n    quarter:         quarter,\n    yearQuarter:     yearQuarter,\n    revenueTier:     (row['Revenue_Tier']          || 'Unknown').trim(),\n    companySizeTier: (row['Company_Size_Tier']     || 'Unknown').trim(),\n    industryTier:    (row['Industry_Tier']         || 'Unknown').trim(),\n    companyType:     (row['Type with Fallback']    || 'Unknown').trim(),\n    country:         (row['Country with Fallback'] || 'Unknown').trim().toUpperCase(),\n    state:           (row['State']                 || '').trim(),\n    crmPlatform:     crmNorm,\n    hasRevops:       hasRevops,\n    lostReason:      (row['Normalized_Lost_Reason'] || 'Not Provided').trim(),\n    salesCycleDays:  salesCycle,\n    marketingAuto:   (row['Marketing Automation']  || '').trim(),\n    salesEngagement: (row['Sales Engagement']      || '').trim()\n  });\n}\n\nreturn [{ json: { deals: cleaned, totalRows: cleaned.length } }];\n"
+      },
+      "id": "clean-enrich",
+      "name": "Clean + Enrich",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Sanity Check\n// Validates expected counts before running expensive AI call.\n// Stops the workflow and surfaces a clear error if counts\n// are off \u2014 saves wasted Anthropic API credits.\n// ============================================================\n\nconst { deals } = $input.first().json;\n\nconst totalWon  = deals.filter(d => d.isWon).length;\nconst totalLost = deals.filter(d => !d.isWon).length;\nconst total     = deals.length;\n\nconst errors = [];\n\nif (totalWon < 500 || totalWon > 550) {\n  errors.push(`Won deals: ${totalWon} (expected ~525)`);\n}\nif (totalLost < 880 || totalLost > 950) {\n  errors.push(`Lost deals: ${totalLost} (expected ~916)`);\n}\nif (total < 1400 || total > 1500) {\n  errors.push(`Total deals: ${total} (expected 1,441)`);\n}\n\nif (errors.length > 0) {\n  throw new Error(\n    'SANITY CHECK FAILED \u2014 Do not proceed.\\n\\n' +\n    errors.join('\\n') +\n    '\\n\\nLikely causes:\\n' +\n    '1. Deal Outcome values do not match CLOSED_WON / CLOSED_LOST (check caps/spacing)\\n' +\n    '2. Google Sheet tab name is wrong or sheet is empty\\n' +\n    '3. Rows were filtered unexpectedly in the Clean + Enrich node'\n  );\n}\n\n// Pass through unchanged\nreturn $input.all();\n"
+      },
+      "id": "sanity-check",
+      "name": "Sanity Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: JS Pre-Calculate\n// Computes every CvR table the AI Agent will reference.\n// Service Line removed \u2014 no longer tracked at Full Funnel.\n// RULE: AI Agent must NEVER calculate numbers itself.\n// ============================================================\n\nconst { deals } = $input.first().json;\n\n// ---- Helpers ------------------------------------------------\n\nfunction cvr(won, total) {\n  if (total === 0) return 0;\n  return Math.round((won / total) * 1000) / 10;\n}\n\nfunction avgAcv(arr) {\n  const won = arr.filter(d => d.isWon && d.amount > 0);\n  if (!won.length) return 0;\n  return Math.round(won.reduce((s, d) => s + d.amount, 0) / won.length);\n}\n\nfunction totalAcv(arr) {\n  return Math.round(arr.filter(d => d.isWon).reduce((s, d) => s + d.amount, 0));\n}\n\nfunction avgCycle(arr) {\n  const valid = arr.filter(d => d.isWon && d.salesCycleDays !== null);\n  if (!valid.length) return null;\n  return Math.round(valid.reduce((s, d) => s + d.salesCycleDays, 0) / valid.length);\n}\n\nfunction groupBy(arr, fn) {\n  const map = {};\n  for (const d of arr) {\n    const k = fn(d) || 'Unknown';\n    if (!map[k]) map[k] = [];\n    map[k].push(d);\n  }\n  return map;\n}\n\nfunction buildTable(grouped, minSample) {\n  return Object.entries(grouped)\n    .filter(([, g]) => g.length >= (minSample || 1))\n    .map(([key, g]) => {\n      const won = g.filter(d => d.isWon).length;\n      return {\n        segment:      key,\n        won:          won,\n        lost:         g.length - won,\n        total:        g.length,\n        cvr:          cvr(won, g.length),\n        avgAcv:       avgAcv(g),\n        totalAcv:     totalAcv(g),\n        avgCycleDays: avgCycle(g)\n      };\n    })\n    .sort((a, b) => b.total - a.total);\n}\n\nfunction sortedOrder(table, order) {\n  return [...table].sort((a, b) => {\n    const av = order.indexOf(a.segment); const bv = order.indexOf(b.segment);\n    return (av === -1 ? 999 : av) - (bv === -1 ? 999 : bv);\n  });\n}\n\n// ---- Top-level stats ----------------------------------------\n\nconst totalWon   = deals.filter(d => d.isWon).length;\nconst totalLost  = deals.length - totalWon;\nconst overallCvr = cvr(totalWon, deals.length);\nconst wonDeals   = deals.filter(d => d.isWon);\nconst years      = [...new Set(deals.map(d => d.year).filter(y => y !== 'Unknown'))].sort();\n\n// ---- 1. Year-over-Year Trend --------------------------------\n\nconst byYear   = groupBy(deals, d => d.year);\nconst yoyTable = years.map(yr => {\n  const g = byYear[yr] || [];\n  const w = g.filter(d => d.isWon).length;\n  return { year: yr, won: w, lost: g.length - w, total: g.length, cvr: cvr(w, g.length), avgAcv: avgAcv(g), totalAcv: totalAcv(g) };\n});\n\n// ---- 2. Quarterly Trend -------------------------------------\n\nconst byYQ         = groupBy(deals, d => d.yearQuarter);\nconst quarterlyTable = [...new Set(deals.map(d => d.yearQuarter).filter(q => q !== 'Unknown'))]\n  .sort()\n  .map(yq => {\n    const g = byYQ[yq] || [];\n    const w = g.filter(d => d.isWon).length;\n    return { period: yq, won: w, lost: g.length - w, total: g.length, cvr: cvr(w, g.length) };\n  });\n\n// ---- 3. Deal Size Band --------------------------------------\n\nfunction dealSizeBand(amt) {\n  if (!amt || amt <= 0) return 'Unknown';\n  if (amt < 5000)       return '<$5K';\n  if (amt < 15000)      return '$5K-$15K';\n  if (amt < 30000)      return '$15K-$30K';\n  if (amt < 60000)      return '$30K-$60K';\n  return '$60K+';\n}\n\nconst dealSizeOrder  = ['<$5K', '$5K-$15K', '$15K-$30K', '$30K-$60K', '$60K+', 'Unknown'];\nconst dealSizeTable  = sortedOrder(buildTable(groupBy(deals, d => dealSizeBand(d.amount)), 1), dealSizeOrder);\n\n// ---- 4. Revenue Tier ----------------------------------------\n\nconst revTierOrder  = ['<$5M', '$5M-$25M', '$25M-$100M', '$100M-$500M', '$500M+', 'Unknown'];\nconst revTierTable  = sortedOrder(buildTable(groupBy(deals, d => d.revenueTier), 3), revTierOrder);\n\n// ---- 5. Company Size Tier -----------------------------------\n\nconst sizeOrder         = ['1-50', '51-200', '201-500', '501-1000', '1001-5000', '5000+', 'Unknown'];\nconst companySizeTable  = sortedOrder(buildTable(groupBy(deals, d => d.companySizeTier), 3), sizeOrder);\n\n// ---- 6. Industry --------------------------------------------\n\nconst industryTable = buildTable(groupBy(deals, d => d.industryTier), 5);\n\n// ---- 7. Company Type ----------------------------------------\n\nconst companyTypeTable = buildTable(groupBy(deals, d => d.companyType), 3);\n\n// ---- 8. CRM Platform ----------------------------------------\n\nconst crmTable = buildTable(groupBy(deals, d => d.crmPlatform), 3);\n\n// ---- 9. Has RevOps ------------------------------------------\n\nconst revopsTable = buildTable(groupBy(deals, d => d.hasRevops), 3);\n\n// ---- 10. Geography ------------------------------------------\n\nconst byCountry    = groupBy(deals, d => d.country === 'us' ? 'US' : d.country);\nconst countryTable = buildTable(byCountry, 3);\n\nconst usDeals   = deals.filter(d => d.country === 'US' || d.country === 'us');\nconst stateTable = buildTable(groupBy(usDeals, d => d.state || 'Unknown'), 3).slice(0, 15);\n\n// ---- 11. Deal Owner (internal + anonymized) -----------------\n\nconst dealOwnerTable = buildTable(groupBy(deals, d => d.dealOwner), 2);\nconst dealOwnerAnon  = dealOwnerTable.map((row, i) => ({ ...row, segment: 'Rep ' + String.fromCharCode(65 + i) }));\nconst anonMap        = {};\nfor (let i = 0; i < dealOwnerTable.length; i++) anonMap[dealOwnerTable[i].segment] = dealOwnerAnon[i].segment;\n\n// ---- 12. Sales Cycle (Won deals only) -----------------------\n\nfunction scBand(days) {\n  if (days === null) return 'Unknown';\n  if (days <= 7)    return '0-7 days';\n  if (days <= 14)   return '8-14 days';\n  if (days <= 30)   return '15-30 days';\n  if (days <= 60)   return '31-60 days';\n  if (days <= 90)   return '61-90 days';\n  return '90+ days';\n}\n\nconst scOrder        = ['0-7 days', '8-14 days', '15-30 days', '31-60 days', '61-90 days', '90+ days', 'Unknown'];\nconst wonWithCycle   = wonDeals.filter(d => d.salesCycleDays !== null);\nconst salesCycleTable = sortedOrder(buildTable(groupBy(wonWithCycle, d => scBand(d.salesCycleDays)), 1), scOrder);\nconst salesCycleByYear = years.map(yr => {\n  const g = wonWithCycle.filter(d => d.year === yr);\n  return { year: yr, avgDays: avgCycle(g), wonDeals: g.length };\n});\n\n// ---- 13. Lost Reasons ---------------------------------------\n\nconst lostDeals      = deals.filter(d => !d.isWon);\nconst lostReasonFreq = Object.entries(groupBy(lostDeals, d => d.lostReason))\n  .map(([reason, g]) => ({ reason, count: g.length, pct: cvr(g.length, lostDeals.length) }))\n  .sort((a, b) => b.count - a.count);\n\nconst topLostIndustries = [...new Set(lostDeals.map(d => d.industryTier))]\n  .map(ind => ({ ind, deals: lostDeals.filter(d => d.industryTier === ind) }))\n  .sort((a, b) => b.deals.length - a.deals.length)\n  .slice(0, 5)\n  .map(({ ind, deals: g }) => {\n    const top = Object.entries(groupBy(g, d => d.lostReason))\n      .map(([r, d]) => ({ reason: r, count: d.length }))\n      .sort((a, b) => b.count - a.count).slice(0, 3);\n    return { industry: ind, total: g.length, topReasons: top };\n  });\n\n// ---- Assemble -----------------------------------------------\n\nreturn [{ json: {\n  metadata: {\n    generatedAt:   new Date().toISOString(),\n    totalDeals:    deals.length,\n    totalWon:      totalWon,\n    totalLost:     totalLost,\n    overallCvr:    overallCvr,\n    overallAvgAcv: avgAcv(deals),\n    totalRevenue:  totalAcv(deals),\n    yearsInData:   years\n  },\n  dealSize:       dealSizeTable,\n  revenueTier:    revTierTable,\n  companySize:    companySizeTable,\n  industry:       industryTable,\n  companyType:    companyTypeTable,\n  crmPlatform:    crmTable,\n  hasRevops:      revopsTable,\n  geography:      { byCountry: countryTable, byState: stateTable },\n  dealOwner:      dealOwnerTable,\n  dealOwnerAnon:  dealOwnerAnon,\n  anonMap:        anonMap,\n  salesCycle: {\n    byBand:         salesCycleTable,\n    byYear:         salesCycleByYear,\n    overallAvgDays: avgCycle(wonWithCycle)\n  },\n  lostReasons: {\n    frequency:      lostReasonFreq,\n    byTopIndustry:  topLostIndustries\n  },\n  trend: {\n    yoy:       yoyTable,\n    quarterly: quarterlyTable\n  }\n}}];\n"
+      },
+      "id": "js-pre-calculate",
+      "name": "JS Pre-Calculate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Format AI Prompt\n// Builds the full structured prompt for the AI Agent.\n// Service Line removed \u2014 no longer tracked at Full Funnel.\n// All numbers come from Pre-Calculate \u2014 AI invents nothing.\n// ============================================================\n\nconst d = $input.first().json;\nconst m = d.metadata;\nconst fmt = n => (n || 0).toLocaleString('en-US');\n\nconst prompt = `You are a B2B revenue intelligence analyst writing an ICP Closed Won/Lost analysis report for Full Funnel \u2014 a B2B GTM and RevOps consulting firm.\n\nAudience: Full Funnel leadership (Matt Iovanni, Steve Barone) \u2014 internal strategic use.\nData period: 2023\u20132026 (${m.yearsInData.join(', ')}).\n\n=== RULES ===\n- NEVER calculate or invent numbers. Every stat must come from the data below.\n- NEVER hallucinate company names, rep names, industries, or deal details.\n- Lead with the insight, then support with data.\n- Use markdown tables for all structured comparisons.\n- Separate every page with exactly: ===PAGE_BREAK===\n- Do NOT use --- as a page separator (conflicts with markdown table syntax).\n- Write in a direct, executive-ready tone. No filler.\n=== END RULES ===\n\n========== PRE-CALCULATED DATA ==========\n\nOVERALL STATS\nTotal deals: ${m.totalDeals} | Won: ${m.totalWon} | Lost: ${m.totalLost}\nOverall CvR: ${m.overallCvr}%\nAvg ACV (Won): $${fmt(m.overallAvgAcv)}\nTotal Won Revenue: $${fmt(m.totalRevenue)}\n\nYEAR-OVER-YEAR TREND\n${JSON.stringify(d.trend.yoy, null, 2)}\n\nQUARTERLY TREND\n${JSON.stringify(d.trend.quarterly, null, 2)}\n\nDEAL SIZE BANDS\n${JSON.stringify(d.dealSize, null, 2)}\n\nREVENUE TIER\n${JSON.stringify(d.revenueTier, null, 2)}\n\nCOMPANY SIZE TIER\n${JSON.stringify(d.companySize, null, 2)}\n\nINDUSTRY (min 5 deals)\n${JSON.stringify(d.industry, null, 2)}\n\nCOMPANY TYPE\n${JSON.stringify(d.companyType, null, 2)}\n\nCRM PLATFORM\n${JSON.stringify(d.crmPlatform, null, 2)}\n\nHAS REVOPS FUNCTION\n${JSON.stringify(d.hasRevops, null, 2)}\n\nGEOGRAPHY \u2014 BY COUNTRY\n${JSON.stringify(d.geography.byCountry, null, 2)}\n\nGEOGRAPHY \u2014 US STATES (top 15)\n${JSON.stringify(d.geography.byState, null, 2)}\n\nDEAL OWNER \u2014 INTERNAL (real rep names)\n${JSON.stringify(d.dealOwner, null, 2)}\n\nSALES CYCLE \u2014 BY BAND (Won deals only)\n${JSON.stringify(d.salesCycle.byBand, null, 2)}\n\nSALES CYCLE \u2014 BY YEAR\n${JSON.stringify(d.salesCycle.byYear, null, 2)}\n\nSALES CYCLE \u2014 OVERALL AVG: ${d.salesCycle.overallAvgDays} days (Won deals)\n\nLOST REASON FREQUENCY\n${JSON.stringify(d.lostReasons.frequency, null, 2)}\n\nLOST REASONS BY TOP 5 INDUSTRIES\n${JSON.stringify(d.lostReasons.byTopIndustry, null, 2)}\n\n========== END DATA ==========\n\nWrite a Gamma-ready report with the pages below. Use ===PAGE_BREAK=== between each page.\n\nPAGE 1 \u2014 Executive Summary\nHeadline stats: total deals, Won/Lost split, CvR, avg ACV, total revenue, data period.\nTop 3 ICP findings (insight-first, one sentence each).\nTop 3 strategic recommendations.\n\nPAGE 2 \u2014 Deal Size & Company Revenue\nDeal size band analysis: ACV sweet spot, conversion by band.\nRevenue tier: which company revenue range converts best.\nCross-read: do bigger companies pay bigger deals?\n\nPAGE 3 \u2014 Industry & Company Profile (Consolidated)\nTop converting industries. Company type breakdown. Company size tier.\nCRM platform \u2014 HubSpot vs Salesforce signal for FF service fit.\nRevOps function: does having RevOps correlate with winning?\n\nPAGE 4 \u2014 Geography & Latest Year Focus (2025\u20132026)\nUS state concentration. International presence.\nZoom in on 2025\u20132026 deals only: what does the current ICP look like vs historical baseline?\n\nPAGE 5 \u2014 Deal Owner Performance (INTERNAL VERSION)\nRep-level table: CvR, avg ACV, total deals, total revenue, avg sales cycle.\nWho are the top performers? Any patterns in how top reps win vs others?\nNote which reps are former employees (deactivated).\n\nPAGE 6 \u2014 Sales Cycle Analysis\nOverall avg time-to-close. By deal size band: do bigger deals take longer.\nBy year: is the sales cycle shortening over time?\n\nPAGE 7 \u2014 Win/Loss Reasons\nLost reason frequency table. Top reasons by industry cross-tab.\nGhosted vs Budget vs Competitor: what does this tell us about qualification gaps?\n\nPAGE 8 \u2014 CvR Trend & Portfolio Health\nYear-over-year CvR improvement. Quarterly trend.\nVolume trajectory. Is growth from more deals or better conversion?\n\nPAGE 9 \u2014 ICP Summary: Prioritise vs Deprioritise\nFor each dimension (Industry, Company Size, Revenue Tier, CRM Platform, Company Type, Geography, Deal Size), state: PRIORITISE / NEUTRAL / DEPRIORITISE with a one-sentence rationale based only on the CvR data.\n\nPAGE 10 \u2014 Methodology & Data Quality\nData sources (HubSpot export via Clay, LinkedIn enrichment, Claygent tech stack research).\nDeal classification logic (NURTURE_EXCLUDE rule, Later Opportunity date threshold).\nKnown gaps: CRM Platform null for ~50% of records; company names sparse on original Won export (fixed via Clay HubSpot lookup). No Gong data available for this build. Service Line field retired and excluded from analysis.`;\n\nreturn [{ json: { prompt, anonMap: d.anonMap } }];\n"
+      },
+      "id": "format-prompt",
+      "name": "Format AI Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "claude-opus-4-5",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokensToSample": 8000,
+          "temperature": 0.3
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent (Claude Opus)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        1420,
+        300
+      ],
+      "notes": "SETUP REQUIRED: Add Anthropic API key as a credential named 'Anthropic account'.\nModel: claude-opus-4-5 for best report quality.\nTemperature 0.3 keeps outputs factual and consistent."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Parse AI Response + Anonymize\n// 1. Extracts report text from Anthropic response format\n// 2. Produces anonymized external version by swapping rep names\n// ============================================================\n\nconst aiResponse = $input.first().json;\nconst anonMap    = $node['Format AI Prompt'].json.anonMap || {};\n\n// Extract text \u2014 handle both direct string and Anthropic content block format\nlet reportText = '';\nif (typeof aiResponse === 'string') {\n  reportText = aiResponse;\n} else if (aiResponse.content && Array.isArray(aiResponse.content)) {\n  reportText = aiResponse.content.map(b => b.text || '').join('');\n} else if (aiResponse.text) {\n  reportText = aiResponse.text;\n} else {\n  reportText = JSON.stringify(aiResponse);\n}\n\n// Build anonymized version \u2014 replace every real rep name with Rep A/B/C...\nlet anonReport = reportText;\nfor (const [realName, anonName] of Object.entries(anonMap)) {\n  // Use split/join to replace all occurrences (no regex needed, avoids special char issues)\n  anonReport = anonReport.split(realName).join(anonName);\n}\n\nconst pageCount = (reportText.match(/===PAGE_BREAK===/g) || []).length + 1;\n\nreturn [{\n  json: {\n    internalReport: reportText,\n    externalReport: anonReport,\n    pageCount:      pageCount\n  }\n}];\n"
+      },
+      "id": "parse-response",
+      "name": "Parse AI Response + Anonymize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.gamma.app/v1/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={\n  \"title\": \"Full Funnel \u2014 Closed Won/Lost ICP Intelligence (Internal)\",\n  \"content\": {{ JSON.stringify($json.internalReport) }},\n  \"theme\": \"professional\"\n}",
+        "options": {}
+      },
+      "id": "gamma-internal",
+      "name": "Gamma \u2014 Internal Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        180
+      ],
+      "notes": "SETUP REQUIRED:\nCreate an HTTP Header Auth credential:\n  Name: Gamma API Key\n  Header name: Authorization\n  Header value: Bearer sk-gamma-8WLq... (your actual key)\n\nConfirm endpoint URL with Gamma docs: https://gamma.app/docs/api"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.gamma.app/v1/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={\n  \"title\": \"Full Funnel \u2014 Closed Won/Lost ICP Intelligence (External Demo)\",\n  \"content\": {{ JSON.stringify($json.externalReport) }},\n  \"theme\": \"professional\"\n}",
+        "options": {}
+      },
+      "id": "gamma-external",
+      "name": "Gamma \u2014 External Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        420
+      ],
+      "notes": "Same Gamma API credential as internal.\nRep names replaced with Rep A, Rep B... in this version."
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "channel": "C0A3D4AULAD",
+        "text": "=\u2705 *Full Funnel ICP Intelligence Report \u2014 Generated*\n\n\ud83d\udcca *Dataset:* {{ $node['JS Pre-Calculate'].json.metadata.totalDeals }} deals | {{ $node['JS Pre-Calculate'].json.metadata.totalWon }} Won / {{ $node['JS Pre-Calculate'].json.metadata.totalLost }} Lost\n\ud83d\udcc8 *Overall CvR:* {{ $node['JS Pre-Calculate'].json.metadata.overallCvr }}%\n\ud83d\udcb0 *Avg ACV:* ${{ $node['JS Pre-Calculate'].json.metadata.overallAvgAcv.toLocaleString() }}\n\ud83d\udcc4 *Pages:* {{ $node['Parse AI Response + Anonymize'].json.pageCount }}\n\n\ud83d\udd12 *Internal version* (rep names visible): Gamma link from internal node above\n\ud83c\udf10 *External/demo version* (anonymized): Gamma link from external node above\n\n_Tag Neeraj for final review before sharing with Matt/Steve_ \ud83d\udc46",
+        "otherOptions": {}
+      },
+      "id": "slack-notify",
+      "name": "Slack \u2014 #outbound-reporting-trial",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        2140,
+        300
+      ],
+      "notes": "Channel ID C0A3D4AULAD pre-set from brief.\nSESTUP REQUIRED: Add Slack OAuth2 credential."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Clay Export",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Clay Export": {
+      "main": [
+        [
+          {
+            "node": "Clean + Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean + Enrich": {
+      "main": [
+        [
+          {
+            "node": "Sanity Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanity Check": {
+      "main": [
+        [
+          {
+            "node": "JS Pre-Calculate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Pre-Calculate": {
+      "main": [
+        [
+          {
+            "node": "Format AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Claude Opus)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Claude Opus)": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response + Anonymize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response + Anonymize": {
+      "main": [
+        [
+          {
+            "node": "Gamma \u2014 Internal Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gamma \u2014 External Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gamma \u2014 Internal Report": {
+      "main": [
+        [
+          {
+            "node": "Slack \u2014 #outbound-reporting-trial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gamma \u2014 External Report": {
+      "main": [
+        [
+          {
+            "node": "Slack \u2014 #outbound-reporting-trial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    "Full Funnel",
+    "ICP Intelligence",
+    "Closed Won/Lost"
+  ],
+  "pinData": {},
+  "versionId": "ff-icp-v2.0",
+  "meta": {
+    "instanceId": "ff-icp-intelligence",
+    "templateCredsSetupCompleted": false
+  }
+}
