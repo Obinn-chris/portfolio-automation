@@ -34,6 +34,7 @@ Complete rebuild after identifying the data bug and scaling requirements. Went f
 - Fixed the open rate calculation — denominator now uses `sequences_started`, not `emails_sent_count`
 - Multi-campaign support — workflow runs across all active campaigns dynamically, no manual configuration per campaign
 - AI-generated narrative using Google Gemini 2.5 Pro — produces a human-readable performance summary with diagnosis and recommendations
+- Switched from passing data through an HTTP API before Gamma to passing it directly to Gamma — simplifying the pipeline and removing a failure point
 - Delivers to Gamma (formatted report doc), Google Drive (archive), and Slack (team notification)
 - Reduced manual correction time from ~30 hours/fortnight to near zero
 
