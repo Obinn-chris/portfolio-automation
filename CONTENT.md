@@ -101,6 +101,198 @@ LinkedIn voice is NOT the same as how Claude talks to Chris in private. On Linke
 
 ---
 
+## Real Post Examples — Match This Voice Exactly
+
+These are Chris's actual top-performing posts. Before writing any LinkedIn post, read these and match the style, length, line structure, and tone. Not close. Exactly.
+
+**What makes these work:**
+- One thought per line
+- Builds slowly through a real story
+- No corporate language whatsoever
+- Feels like a person talking, not a brand posting
+- Ends with a question that makes people want to answer
+- Personal and warm but never soft
+
+---
+
+**Example 1 — Career story (279,170 impressions)**
+
+My friend went from earning less than $40k a year to $250k
+
+But that's not the most interesting part.
+
+He had just graduated
+As a new grad, he was working a job that barely paid.
+
+One day he reached out to me, asking how to break into tech sales
+I offered to help him get into tech sales, the same way a mentor had helped me for free.
+
+We started hopping on calls
+And I noticed something every time we spoke.
+
+He was always outside
+Loud noise in the background
+That sounded like a construction site, I knew he needed that breakthrough.
+
+After some coaching and less than 3 months of hard work he landed his first SDR offer.
+
+Pay $45k base.
+
+His progression from there:
+
+Year 1 - $50K
+Year 2 - $80k
+Year 3 - he's already at $145k - $250k.
+
+His life changed in less than 3 years and still changing.
+
+Tech sales can change your life, It changed mine too.
+
+Whenever I have the opportunity to advise new grads on a career path
+I don't hesitate to tell them about tech sales.
+
+---
+
+**Example 2 — Show up story (207,755 impressions)**
+
+I had an interview by 4am
+And a flight to catch that same morning.
+
+I had slept late because the previous night
+Working on a project and packing my bags for my travel.
+
+In total I only had about 2.5 hours of sleep, slept by 12:30 am
+Alarm was set for 3:30 am, but I woke up 30 minutes earlier 3 am.
+
+Did my interview by 4 am with clearer eyes, a bit deeper voice,
+Finished packing up and jumped in a cab to the airport.
+
+I could have rescheduled, I didn't
+And honestly, it would've been easier for me
+
+I'm not saying you need to run on 2+ hours of sleep to succeed
+
+But sometimes all you need to do is show up, no matter the situation
+Opportunities don't wait for the right moment, neither should you.
+
+Have you ever shown up when everything said you shouldn't?
+
+---
+
+**Example 3 — Tool + insight (61,369 impressions)**
+
+Highest earning SDRs are cold callers and that's not changing anytime soon.
+
+If you're not working at companies like OpenAI, Anthropic etc
+Where you're getting an unlimited amount of leads coming to you nonstop
+
+I suggest you make cold calling your next best activity.
+
+Reason is
+Cold emails are getting automated by GTMEs
+LinkedIn is going through the same shift.
+
+So If you must remain at the top cold calling is your best bet
+It is also the fastest way to talk to prospects and book a meeting.
+
+- reach decision makers faster
+- handle objections in real time
+- and book meetings on the spot.
+
+I use FullEnrich to find triple-verified numbers
+So I don't waste time calling the wrong people.
+
+I also love that I can
+Build my cold calling list on one platform as 𝐭𝐢𝐦𝐞 𝐢𝐬 𝐦𝐨𝐧𝐞𝐲
+And use a waterfall enrichment from across 20+ data providers.
+
+Remember, you're one call away from your biggest meeting
+
+The only question is:
+Are you picking up the phone today?
+
+---
+
+**Example 4 — Sales story with lesson**
+
+I have an SDR friend who became an AE
+For their first time at a new company.
+
+But after 3 months of ramp he was heading toward PIP
+WHY?
+
+He was being metric on meetings booked that actually close
+The problem is, he's in the enterprise side of things, and deals can take an average of 3 months to close.
+
+Here's what confused him:
+He was top of the leaderboard for meetings booked and had also taken a few discovery calls doing everything right, still heading toward PIP.
+
+When he told me about it:
+I asked him a couple of clarifying questions, then I told him
+Only a handful of people go into PIP and survive it, most reps don't.
+
+So I gave him two pieces of advice:
+
+1) Level up your qualification game as you're now an AE, and disqualify more.
+2) Start looking for a new role, just in case this doesn't go your way.
+
+He'd already sat through two PIP meetings.
+
+But 3 weeks later, one of his meetings closed
+A big one, shooting him out of the fire immediately.
+
+𝐈𝐭 𝐠𝐨𝐭 𝐦𝐞 𝐭𝐡𝐢𝐧𝐤𝐢𝐧𝐠: not everyone will be this lucky
+
+He could be fired right before that deal closed, but his record would be
+"Fired for poor performance"
+
+Meaning you could be letting a top performer go too early
+As a sales leader, what's the best way to handle this situation?
+
+---
+
+**Example 5 — Industry stat + humor + question**
+
+Just saw Salesforce's latest report showing reps spend only 28% of their time actually selling.
+
+Honestly…that 28% sounds generous 😂
+
+I know salespeople who start Monday morning with:
+
+Internal meeting
+
+Forecast meeting
+
+Pipeline review
+
+CRM updates
+
+Another meeting to discuss the previous meetings
+
+And somehow they're still expected to sell and hit quota in between.
+
+Now imagine a footballer spending 72% of training tying their shoelaces.
+
+Or a chef spending 72% of the day washing plates.
+
+Or me spending 72% of my day refreshing just LinkedIn notifications
+
+Maybe that answers some questions
+
+The funny thing here is…
+
+Most of us got into sales because we liked talking to people, solving problems, and making money.
+
+But somewhere along the way, we accidentally turned salespeople into part-time CRM administrators.
+
+So now I'm really curious:
+
+Do you think Salesforce's 28% figure is accurate, too high, or too low?
+
+And what's the biggest thing stealing selling time today?
+
+---
+
 ## Content Pillars
 
 ### 1. Systems & Builds (highest priority for job search)
